@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+build/
+next-env.d.ts
+*.tsbuildinfo
+
+# Environment variables — never commit secrets
+.env
+.env*.local
+
+# OS and editor
+.DS_Store
+*.pem
+npm-debug.log*
