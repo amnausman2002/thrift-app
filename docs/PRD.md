@@ -93,8 +93,8 @@ The core entity. Status drives everything the buyer, the seller and the admin se
 | size | string | Clothes: XS–XL. Shoes: UK 3–9. Bags: null |
 | measurements | string | Optional free text, inches |
 | fit\_note | text | Optional, all categories. "Marked small but fits a medium", "runs narrow". Prompted with an example on the form |
-| condition | enum | brand\_new, excellent, very\_good, good — each shown with its description |
-| flaw\_note | text | Optional. Prompted for good, and the form asks for a photo of the flaw |
+| condition | enum | brand\_new\_with\_tags, brand\_new\_without\_tags, very\_good, fair — each shown with its description |
+| flaw\_note | text | Optional. Prompted for fair, and the form asks for a photo of the flaw |
 | is\_replica | boolean | Required declaration, not inferred |
 | asking\_price | integer | PKR |
 | original\_price | integer | Optional, PKR |
@@ -111,12 +111,12 @@ The core entity. Status drives everything the buyer, the seller and the admin se
 
 | Value | Label | Description shown on the form |
 | :---- | :---- | :---- |
-| brand\_new | Brand new | With tags, never worn |
-| excellent | Excellent | No tags, worn a few times |
+| brand\_new\_with\_tags | Brand new with tags | With tags, never worn |
+| brand\_new\_without\_tags | Brand new without tags | No tags, never worn |
 | very\_good | Very good | Well worn, but still in great shape |
-| good | Good | Shows some signs of wear — please photograph the areas that show it |
+| fair | Fair | Shows some signs of wear — please photograph the areas that show it |
 
-Sample row: { title: "Khaadi lawn kurta", brand: "khaadi", category: "kurta", size: "M", condition: "excellent", fit\_note: "Roomy, would fit a large too", is\_replica: false, asking\_price: 3000, original\_price: 8500, is\_negotiable: true, city: "lahore", status: "live" }
+Sample row: { title: "Khaadi lawn kurta", brand: "khaadi", category: "kurta", size: "M", condition: "very\_good", fit\_note: "Roomy, would fit a large too", is\_replica: false, asking\_price: 3000, original\_price: 8500, is\_negotiable: true, city: "lahore", status: "live" }
 
 ### **Photo**
 

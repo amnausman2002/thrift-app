@@ -173,7 +173,7 @@ If a Gemini call fails or is slow, the flow carries on without it. AI failure ne
 - Where possible show the evidence, for example "We read 'Khaadi' on the neck label".
 
 **Suggested price (`lib/pricing.ts`, our own rules, not Gemini):**
-- With an original price, the suggested range is a share of it: `brand_new` 55 to 70%, `excellent` 40 to 55%, `very_good` 30 to 45%, `good` 20 to 30%.
+- With an original price, the suggested range is a share of it, one percentage bracket per condition tier (`brand_new_with_tags`, `brand_new_without_tags`, `very_good`, `fair`). TODO: set the actual percentages — the old brackets (55–70% / 40–55% / 30–45% / 20–30%) were keyed to the previous condition tiers and no longer line up.
 - Without one, use the brand tier by category table in `lib/pricing-table.ts`, which we edit by hand. It has an "unbranded" tier used when brand is `unknown` or `other`, and that output is labelled a rough range.
 - Round to the nearest Rs 100 and always show a range, never a single number. She decides the final price.
 - The numbers are starting guesses, and `lib/pricing-table.ts` says so in a comment at the top.
@@ -224,10 +224,10 @@ Full field lists are in the PRD under "Domain model". Do not add, rename or remo
 - **Categories:** kurta, pret, co_ord_set, dupatta, dress, top, bottoms, jeans, skirt, jacket, sportswear, shoes, bag
 - **Sizes:** clothes XS to XL, shoes UK 3 to 9, bags have no size
 - **Condition** (always shown with its description):
-  - `brand_new`: Brand new, "With tags, never worn"
-  - `excellent`: Excellent, "No tags, worn a few times"
+  - `brand_new_with_tags`: Brand new with tags, "With tags, never worn"
+  - `brand_new_without_tags`: Brand new without tags, "No tags, never worn"
   - `very_good`: Very good, "Well worn, but still in great shape"
-  - `good`: Good, "Shows some signs of wear — please photograph the areas that show it"
+  - `fair`: Fair, "Shows some signs of wear — please photograph the areas that show it"
 - **Rejection reasons:** bad_photos, missing_details, not_allowed, suspected_counterfeit
 - **Report reasons:** counterfeit, not_as_described, inappropriate, spam
 - **Brands:**
