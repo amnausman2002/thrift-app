@@ -173,7 +173,7 @@ If a Gemini call fails or is slow, the flow carries on without it. AI failure ne
 - Where possible show the evidence, for example "We read 'Khaadi' on the neck label".
 
 **Suggested price (`lib/pricing.ts`, our own rules, not Gemini):**
-- With an original price, the suggested range is a share of it, one percentage bracket per condition tier (`brand_new_with_tags`, `brand_new_without_tags`, `very_good`, `fair`). TODO: set the actual percentages — the old brackets (55–70% / 40–55% / 30–45% / 20–30%) were keyed to the previous condition tiers and no longer line up.
+- With an original price, the suggested range is a share of it: `brand_new_with_tags` 55 to 70%, `brand_new_without_tags` 40 to 55%, `very_good` 30 to 45%, `fair` 20 to 30%.
 - Without one, use the brand tier by category table in `lib/pricing-table.ts`, which we edit by hand. It has an "unbranded" tier used when brand is `unknown` or `other`, and that output is labelled a rough range.
 - Round to the nearest Rs 100 and always show a range, never a single number. She decides the final price.
 - The numbers are starting guesses, and `lib/pricing-table.ts` says so in a comment at the top.

@@ -254,7 +254,7 @@ const result = await ai.models.generateContent({
 - **Suggested price in PKR (Pakistani rupees):**
   - The model has no data on resale prices. If you ask it for a figure, it will make up a confident-sounding one.
   - Compute the range on the server instead:
-    1. Ask for the original price, optionally. Apply a condition multiplier, one per tier (`brand_new_with_tags`, `brand_new_without_tags`, `very_good`, `fair`). TODO: set the actual percentages — the old brackets (55–70% / 40–55% / 30–45% / 20–30%) were keyed to the previous condition tiers and no longer line up.
+    1. Ask for the original price, optionally. Apply condition multipliers, starting with: brand_new_with_tags 55–70%, brand_new_without_tags 40–55%, very_good 30–45%, fair 20–30%.
     2. If there is no original price, use your own table of brand tier × category.
     3. Round to the nearest Rs 100 and show a *range*: "Similar items sell for Rs 2,200–3,000. You choose."
 
