@@ -4,15 +4,15 @@
 import { MediaResolution, ThinkingLevel } from "@google/genai";
 import { getAi, GEMINI_MODEL } from "@/lib/ai/client";
 import { listingDraftSchema, listingDraftZodSchema, type ListingDraft } from "@/lib/ai/schemas";
+import {
+  AI_TIMEOUT_MS,
+  isRetryable,
+  toImageParts,
+  validatePhotos,
+  type ImagePart,
+} from "@/lib/ai/images";
 import { BRANDS } from "@/lib/constants";
 import { suggestPrice, type PriceRange } from "@/lib/pricing";
-
-export const MIN_PHOTOS = 1;
-export const MAX_PHOTOS = 6;
-export const MAX_PHOTO_BYTES = 7 * 1024 * 1024;
-export const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
-
-const TIMEOUT_MS = 15_000;
 
 const SYSTEM_INSTRUCTION = `You help women in Pakistan list preloved clothing on Reloved. You draft; a person decides.
 Accuracy matters more than filling every field. When you are not sure, say "unknown".
@@ -64,32 +64,7 @@ export type PrefillInput = {
   originalPrice?: number;
 };
 
-function validatePhotos(photos: File[]): string | null {
-  if (photos.length < MIN_PHOTOS || photos.length > MAX_PHOTOS) {
-    return `Send between ${MIN_PHOTOS} and ${MAX_PHOTOS} photos.`;
-  }
-  for (const photo of photos) {
-    if (!ALLOWED_MIME_TYPES.includes(photo.type)) {
-      return "Photos must be JPEG, PNG or WebP.";
-    }
-    if (photo.size > MAX_PHOTO_BYTES) {
-      return "Each photo must be under 7 MB.";
-    }
-  }
-  return null;
-}
-
-/** 429 means too many requests, 503 means the service is briefly unavailable.
- *  Both are worth one retry; nothing else is. */
-function isRetryable(error: unknown): boolean {
-  if (typeof error !== "object" || error === null || !("status" in error)) {
-    return false;
-  }
-  const { status } = error as { status: unknown };
-  return status === 429 || status === 503;
-}
-
-async function generateDraft(imageParts: { inlineData: { data: string; mimeType: string } }[]) {
+async function generateDraft(imageParts: ImagePart[]) {
   return getAi().models.generateContent({
     model: GEMINI_MODEL,
     contents: [{ role: "user", parts: [...imageParts, { text: USER_TEXT }] }],
@@ -99,7 +74,7 @@ async function generateDraft(imageParts: { inlineData: { data: string; mimeType:
       responseSchema: listingDraftSchema,
       thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
       mediaResolution: MediaResolution.MEDIA_RESOLUTION_MEDIUM,
-      httpOptions: { timeout: TIMEOUT_MS },
+      httpOptions: { timeout: AI_TIMEOUT_MS },
     },
   });
 }
@@ -124,14 +99,7 @@ export async function runPrefill({ photos, originalPrice }: PrefillInput): Promi
   const startedAt = Date.now();
 
   try {
-    const imageParts = await Promise.all(
-      photos.map(async (photo) => ({
-        inlineData: {
-          data: Buffer.from(await photo.arrayBuffer()).toString("base64"),
-          mimeType: photo.type,
-        },
-      })),
-    );
+    const imageParts = await toImageParts(photos);
 
     let response;
     try {
