@@ -7,6 +7,7 @@ import { listingDraftSchema, listingDraftZodSchema, type ListingDraft } from "@/
 import {
   AI_TIMEOUT_MS,
   isRetryable,
+  plainErrorMessage,
   toImageParts,
   validatePhotos,
   type ImagePart,
@@ -133,10 +134,6 @@ export async function runPrefill({ photos, originalPrice }: PrefillInput): Promi
       latencyMs: Date.now() - startedAt,
     };
   } catch (error) {
-    return {
-      ok: false,
-      reason: "ai",
-      error: error instanceof Error ? error.message : "Could not read the photos.",
-    };
+    return { ok: false, reason: "ai", error: plainErrorMessage(error) };
   }
 }
