@@ -93,7 +93,10 @@ export default function PrefillTester() {
     }
   }
 
-  const listing = (results?.prefill.body as { listing?: Record<string, string> } | undefined)?.listing;
+  const prefillBody = results?.prefill.body as
+    | { listing?: Record<string, string>; error?: string }
+    | undefined;
+  const listing = prefillBody?.listing;
   const priceRange = (results?.prefill.body as { priceRange?: { min: number; max: number; isRough: boolean } | null } | undefined)
     ?.priceRange;
   const quality = results?.photoQuality.body as
@@ -173,7 +176,10 @@ export default function PrefillTester() {
                 />
               </>
             ) : (
-              <p style={{ color: "#b00" }}>No listing returned — see the raw response below.</p>
+              // Say why. The reason is the whole point of this page.
+              <p style={{ color: "#b00" }}>
+                {prefillBody?.error ?? "No listing returned — see the raw response below."}
+              </p>
             )}
           </section>
 
@@ -182,7 +188,12 @@ export default function PrefillTester() {
               Photo quality · HTTP {results.photoQuality.status}
             </h2>
             <TimingLine timing={results.photoQuality.timing} />
-            {quality?.skipped && <p style={{ color: "#666" }}>Skipped — no flags to show.</p>}
+            {quality?.skipped && (
+              <p style={{ color: "#666" }}>
+                Skipped — the check failed, timed out, or the photos were rejected. By design it never
+                says why and never blocks the seller. See the photo-to-listing error above.
+              </p>
+            )}
             <Row label="overall usable" value={String(quality?.overallUsable ?? "—")} />
             <Row label="retake tip" value={quality?.retakeTip || "—"} />
             {quality?.flags?.length ? (
@@ -204,7 +215,7 @@ export default function PrefillTester() {
             ) : (
               <Row label="flags" value="none returned" />
             )}
-            {quality?.flags && quality.flags.length !== photos.length && (
+            {quality?.flags && !quality.skipped && quality.flags.length !== photos.length && (
               <p style={{ color: "#a60", fontSize: 13 }}>
                 Note: {quality.flags.length} flag entries for {photos.length} photos. The model does not always
                 return one per photo.
