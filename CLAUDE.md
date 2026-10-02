@@ -229,6 +229,8 @@ Everything else in this file is the plan, not the code. Do not assume a file exi
 - `lib/constants.ts` — brands (40 + `other` + `unknown`), 13 categories, 4 conditions, 5 photo tips, clothes and shoe sizes with `SIZE_OPTIONS` per category, 33 cities + `other`
 - `app/globals.css` + `app/layout.tsx` — every token from `design-system.md`, the type scale as `.text-*` classes, Fraunces and Inter self-hosted via `next/font/google`. Verified in the browser: tokens resolve, the type scale matches the spec, and both of Fraunces' variable axes (`opsz` and weight) are live
 - `design-system.md`, `components.html` — Bismah's design system and the 25-component visual reference
+- `components/ui/` — the 8 shared components, ported from `components.html` with its class names unchanged: `PrimaryButton`, `SecondaryButton`, `TextLink`, `Input`, `Textarea`, `FilterChip` (+ `ChipRow`), `StatusChip`, `BottomSheet`. Checked in a browser against the showcase
+- `app/dev/ui/` — gallery of the above, for comparing against `components.html`. 404s in production, verified
 - `lib/ai/schemas.ts` — both response schemas with matching Zod checks
 - `POST /api/ai/prefill` + `lib/ai/prefill.ts` — Call 1, including the server-side brand rules
 - `POST /api/ai/photo-quality` + `lib/ai/photo-quality.ts` — Call 2, all six flags
@@ -237,7 +239,12 @@ Everything else in this file is the plan, not the code. Do not assume a file exi
 - `app/dev/prefill/` — manual test page. Returns 404 in production, verified
 - `scripts/try-prefill.ts` — runs a folder of photos and prints a table
 
-**Not built at all yet:** Firebase (auth, Firestore, Storage), `components/` (no React components exist — only the CSS reference in `components.html`), every real screen, the buyer side, admin, natural-language search, the approval copilot, catalogue-photo detection, the colour list, `eval/items.csv`.
+**Not built at all yet:** Firebase (auth, Firestore, Storage), `components/seller/`, `components/buyer/`, `components/admin/`, every real screen, the buyer side, admin, natural-language search, the approval copilot, catalogue-photo detection, the colour list, `eval/items.csv`.
+
+**Three deliberate changes from `components.html`, flagged for Bismah:**
+- `FilterChip` is a `<button>`, not a `<div>`. A div cannot be tabbed to, activated with the keyboard, or announced as a control. Visually identical.
+- `BottomSheet` is `position: fixed` in a portal, not `position: absolute`. In `components.html` it sits inside a `.phone-frame` mock, which only exists in that static page.
+- Three off-scale font sizes (`--size-sheet-body` 15px, `--size-meta` 13px, `--size-micro` 11px) were tokenised. `design-system.md` specifies the values but does not name them.
 
 **Known gaps, decided deliberately — do not "fix" without asking:**
 - There is no suggested price anywhere. See the Price section above.

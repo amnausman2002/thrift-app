@@ -88,6 +88,28 @@ export const CONDITIONS: { value: ConditionValue; label: string; description: st
   { value: "fair", label: "Fair", description: "Shows some signs of wear — please photograph the areas that show it" },
 ];
 
+// Listing status. Only admins set `live` and `rejected`. Browse shows `live`
+// only, newest first.
+export const LISTING_STATUSES = [
+  "pending",
+  "live",
+  "rejected",
+  "sold",
+  "expired",
+  "hidden",
+] as const;
+
+export type ListingStatus = (typeof LISTING_STATUSES)[number];
+
+export const LISTING_STATUS_LABELS: Record<ListingStatus, string> = {
+  pending: "Pending",
+  live: "Live",
+  rejected: "Rejected",
+  sold: "Sold",
+  expired: "Expired",
+  hidden: "Hidden",
+};
+
 // Clothes XS-XL, shoes UK 3-9, bags have no size at all.
 export const CLOTHING_SIZES = ["XS", "S", "M", "L", "XL"] as const;
 
