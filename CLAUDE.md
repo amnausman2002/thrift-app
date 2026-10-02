@@ -241,10 +241,15 @@ Everything else in this file is the plan, not the code. Do not assume a file exi
 
 **Not built at all yet:** Firebase (auth, Firestore, Storage), `components/seller/`, `components/buyer/`, `components/admin/`, every real screen, the buyer side, admin, natural-language search, the approval copilot, catalogue-photo detection, the colour list, `eval/items.csv`.
 
-**Three deliberate changes from `components.html`, flagged for Bismah:**
+**Deliberate changes from `components.html`, flagged for Bismah.** The PRD has the full list under "Changes since this document was written", including the product-level ones. The visual ones:
 - `FilterChip` is a `<button>`, not a `<div>`. A div cannot be tabbed to, activated with the keyboard, or announced as a control. Visually identical.
-- `BottomSheet` is `position: fixed` in a portal, not `position: absolute`. In `components.html` it sits inside a `.phone-frame` mock, which only exists in that static page.
+- `BottomSheet` is `position: fixed` in a portal, not `position: absolute`. In `components.html` it sits inside a `.phone-frame` mock, which only exists in that static page. It also gained `max-width: 480px` and `max-height: 90vh` with scroll, which the 375px mock never needed.
+- **`.bottom-sheet-actions` stacks vertically.** `components.html` sets `display: flex` with no direction, so the two CTAs sit side by side. `design-system.md` says "Never side-by-side". The design system won. **The two files contradict each other here, so one of them needs fixing.**
 - Three off-scale font sizes (`--size-sheet-body` 15px, `--size-meta` 13px, `--size-micro` 11px) were tokenised. `design-system.md` specifies the values but does not name them.
+- `TextLink` renders a real `<a>` when given `href`. `components.html` only has the `<button>` form, but two of its uses ("View my listings", "List another item") navigate.
+- States added that `design-system.md` specifies but `components.html` has no CSS for: `:disabled` on inputs, textareas and chips, the error border on `.textarea`, and suppressing the hover invert on a disabled button.
+
+**The condition scale was a real conflict, now settled.** `components.html` had Brand new / Excellent / Very good / Good, where "Excellent" meant "no tags, worn a few times". The PRD and `lib/constants.ts` say `brand_new_without_tags` means "no tags, never worn". Different items, not different wording. **The PRD wins**; Amna is updating `components.html`. Do not change `CONDITION_VALUES` or `CONDITIONS` in `lib/constants.ts`: they also feed the Gemini prefill schema.
 
 **Known gaps, decided deliberately — do not "fix" without asking:**
 - There is no suggested price anywhere. See the Price section above.
@@ -288,6 +293,7 @@ Full field lists are in the PRD under "Domain model". Do not add, rename or remo
   - `brand_new_without_tags`: Brand new without tags, "No tags, never worn"
   - `very_good`: Very good, "Well worn, but still in great shape"
   - `fair`: Fair, "Shows some signs of wear — please photograph the areas that show it"
+- **Listing status** (`LISTING_STATUSES`, with `LISTING_STATUS_LABELS` for display): pending, live, rejected, sold, expired, hidden. `StatusChip` renders them. Sellers see a neutral amber "Needs attention" instead of the red Rejected chip on my-listings, per `components.html`: that variant is not built yet
 - **Rejection reasons:** bad_photos, missing_details, not_allowed, suspected_counterfeit
 - **Report reasons:** counterfeit, not_as_described, inappropriate, spam
 - **Brands:**

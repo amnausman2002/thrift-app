@@ -90,7 +90,7 @@ The core entity. Status drives everything the buyer, the seller and the admin se
 | brand | enum | Fixed list of \~30, plus other |
 | brand\_other | string | Only when brand is other |
 | category | enum | kurta, pret, co\_ord\_set, dupatta, dress, top, bottoms, jeans, skirt, jacket, sportswear, shoes, bag |
-| size | string | Clothes: XS–XL. Shoes: UK 3–9. Bags: null |
+| size | string | Clothes: XS–XL. Shoes: UK 3–9. **Bags and dupattas: null** (no size field shown) |
 | measurements | string | Optional free text, inches |
 | fit\_note | text | Optional, all categories. "Marked small but fits a medium", "runs narrow". Prompted with an example on the form |
 | condition | enum | brand\_new\_with\_tags, brand\_new\_without\_tags, very\_good, fair — each shown with its description |
@@ -99,7 +99,8 @@ The core entity. Status drives everything the buyer, the seller and the admin se
 | asking\_price | integer | PKR |
 | original\_price | integer | Optional, PKR |
 | is\_negotiable | boolean |  |
-| city | enum | Auto-filled from the seller's city, editable |
+| city | enum | Auto-filled from the seller's city, editable. 33 cities plus `other` |
+| city\_other | string | **Not built yet.** Only when city is `other`, mirroring `brand_other`. Needs Bismah's agreement before it is added, because buyers see the city on browse and item detail |
 | status | enum | pending, live, rejected, sold, expired, hidden |
 | rejection\_reason | enum | bad\_photos, missing\_details, not\_allowed, suspected\_counterfeit |
 | view\_count | integer | Seller and admin only |
@@ -272,6 +273,22 @@ This protects the 24-hour turnaround, and it is the half of the product nobody e
 ### **4\. Catalogue-photo detection (fraud)**
 
 A specific fraud in Pakistani resale: posting the brand's own product photo instead of the item being sold. A studio shot looks different from a photo taken on a bed in daylight, and that difference is detectable. It surfaces as a flag in the queue, never an automatic rejection — a seller with good lighting and a plain wall must not be punished for it.
+
+## **Changes since this document was written**
+
+Decisions taken during the build that differ from the spec above, or that resolve a conflict between this document, `design-system.md` and `components.html`. Anything here is **agreed and live in the code**. Anything still open says so.
+
+| Date | Change | Why | Status |
+| :---- | :---- | :---- | :---- |
+| 2 Oct 2026 | **Dupattas have no size**, like bags. The `size` row above originally exempted bags only | A dupatta is a scarf. There is no XS to XL for it | Agreed, built. `SIZE_OPTIONS` in `lib/constants.ts` |
+| 2 Oct 2026 | **`city` gains an `other` value**, last in the list, after 33 named cities | The north star is a woman *anywhere* in Pakistan. A fixed list of 33 is a dead end for everyone else | Agreed, built |
+| 2 Oct 2026 | **`city_other` free-text field** to pair with `other` | Without it, `other` tells a buyer nothing. Mirrors `brand_other` | **Open.** Needs Bismah's agreement: buyers see the city on browse and item detail |
+| 2 Oct 2026 | **Condition scale: this document wins** over `components.html`, which had Brand new / Excellent / Very good / Good | The two disagreed on meaning, not just wording: `components.html` had "no tags, worn a few times" where this document has "no tags, never worn". Different items. The values here also feed the Gemini prefill schema | Agreed. Amna is updating `components.html` to match |
+| 2 Oct 2026 | **Bottom sheet CTAs stack vertically**, primary on top | `components.html` lays them out in a row; `design-system.md` says "Never side-by-side". The design system won | Built. Flagged to Bismah |
+| 2 Oct 2026 | **No Tailwind.** Plain global CSS in `app/globals.css` | The design system already existed as vanilla CSS with custom properties. Converting it would have added a package and a chance to drift | Agreed, built |
+| 2 Oct 2026 | **`FilterChip` is a `<button>`**, not a `<div>` as in `components.html` | A div cannot be tabbed to, activated by keyboard, or announced as a control. Visually identical | Built. Flagged to Bismah |
+| 2 Oct 2026 | **`BottomSheet` is `position: fixed` in a portal**, not `absolute` | In `components.html` it sits inside a `.phone-frame` mock that only exists on that static page | Built. Flagged to Bismah |
+| 2 Oct 2026 | **Colour list still does not exist** | Call 1 already returns a `colour` and `Listing.colour` is specified above, so nothing can validate it | **Open.** Real gap, not a nicety |
 
 ## **Read-it-back check**
 
