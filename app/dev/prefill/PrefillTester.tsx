@@ -4,6 +4,11 @@
 // the design tokens are still TODO, so this uses bare inline styles.
 
 import { useState } from "react";
+import { preparePhotos, type PreparedPhoto } from "@/lib/photos";
+
+function mb(bytes: number): string {
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+}
 
 type Timing = { roundTripMs: number; serverMs?: number };
 
@@ -60,19 +65,37 @@ function TimingLine({ timing }: { timing: Timing }) {
 
 export default function PrefillTester() {
   const [photos, setPhotos] = useState<File[]>([]);
+  const [prepared, setPrepared] = useState<PreparedPhoto[]>([]);
+  const [prepMs, setPrepMs] = useState<number | null>(null);
+  const [preparing, setPreparing] = useState(false);
   const [previews, setPreviews] = useState<string[]>([]);
   const [originalPrice, setOriginalPrice] = useState("");
   const [busy, setBusy] = useState(false);
   const [results, setResults] = useState<Results | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  function onPick(files: FileList | null) {
+  async function onPick(files: FileList | null) {
     const picked = files ? Array.from(files) : [];
     previews.forEach((url) => URL.revokeObjectURL(url));
-    setPhotos(picked);
-    setPreviews(picked.map((file) => URL.createObjectURL(file)));
     setResults(null);
     setError(null);
+    setPreviews([]);
+    setPhotos([]);
+    setPrepared([]);
+    setPrepMs(null);
+    if (picked.length === 0) return;
+
+    // Convert and shrink first. The previews show the prepared photos, so what
+    // you see here is exactly what gets sent.
+    setPreparing(true);
+    const startedAt = performance.now();
+    const ready = await preparePhotos(picked);
+    setPrepMs(Math.round(performance.now() - startedAt));
+    setPreparing(false);
+
+    setPrepared(ready);
+    setPhotos(ready.map((item) => item.file));
+    setPreviews(ready.map((item) => URL.createObjectURL(item.file)));
   }
 
   async function onRead() {
@@ -111,7 +134,9 @@ export default function PrefillTester() {
         Development only. Pick 1 to 6 photos of one item and read them.
       </p>
 
-      <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(e) => onPick(e.target.files)} />
+      {/* Deliberately "image/*", not a list naming image/heic. Safari 17+ has a
+          bug where listing image/heic makes it convert JPEGs *into* HEIC. */}
+      <input type="file" accept="image/*" multiple onChange={(e) => onPick(e.target.files)} />
 
       <div style={{ margin: "12px 0" }}>
         <label style={{ fontSize: 14 }}>
@@ -126,6 +151,8 @@ export default function PrefillTester() {
         </label>
       </div>
 
+      {preparing && <p style={{ color: "#666" }}>Converting and shrinking…</p>}
+
       {previews.length > 0 && (
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", margin: "16px 0" }}>
           {previews.map((url, index) => (
@@ -138,10 +165,39 @@ export default function PrefillTester() {
         </div>
       )}
 
+      {prepared.length > 0 && (
+        <section style={{ margin: "16px 0" }}>
+          <h2 style={{ fontSize: 16, borderBottom: "1px solid #ddd", paddingBottom: 4 }}>
+            Prepared in the browser
+          </h2>
+          <div style={{ ...mono, fontSize: 13, color: "#444", marginBottom: 8 }}>
+            {prepMs} ms · {mb(prepared.reduce((sum, p) => sum + p.originalBytes, 0))} →{" "}
+            {mb(prepared.reduce((sum, p) => sum + p.finalBytes, 0))}
+          </div>
+          {prepared.map((item, index) => (
+            <Row
+              key={index}
+              label={`photo ${index}`}
+              value={
+                <>
+                  {mb(item.originalBytes)} → {mb(item.finalBytes)}
+                  {item.convertedFromHeic ? " · HEIC converted" : ""}
+                  {item.problem ? <span style={{ color: "#b00" }}> · {item.problem}</span> : ""}
+                </>
+              }
+            />
+          ))}
+        </section>
+      )}
+
       <button
         onClick={onRead}
-        disabled={busy || photos.length === 0}
-        style={{ padding: "8px 16px", fontSize: 15, cursor: busy || photos.length === 0 ? "default" : "pointer" }}
+        disabled={busy || preparing || photos.length === 0}
+        style={{
+          padding: "8px 16px",
+          fontSize: 15,
+          cursor: busy || preparing || photos.length === 0 ? "default" : "pointer",
+        }}
       >
         {busy ? "Reading…" : "Read photos"}
       </button>

@@ -88,6 +88,8 @@ lib/
     prefill.ts        Photo to listing
     photo-quality.ts  Photo quality check
     runBoth.ts        Fires both seller calls at the same time
+    images.ts         Shared photo checks and limits for both AI calls (server side)
+  photos.ts           Browser-side HEIC conversion and resizing, before upload
   pricing.ts          Suggested price range (our own rules, never the model)
   pricing-table.ts    Hand-editable brand tier by category table
   constants.ts        Every fixed list (categories, sizes, conditions, reasons, brands, cities, photo tips)
