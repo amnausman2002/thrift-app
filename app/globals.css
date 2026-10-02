@@ -1,0 +1,183 @@
+/* Reloved global stylesheet.
+ *
+ * Tokens, reset and type scale come from `design-system.md` and the token block
+ * at the top of `components.html`. Class names here match `components.html`
+ * exactly, so either file can be used to find the other.
+ *
+ * Per-component CSS is lifted from `components.html` as each component is built.
+ * Never hard-code a colour or a font size: use the tokens below. */
+
+/* ── Tokens ─────────────────────────────────────────────── */
+:root {
+  --canvas:          #FAF9F7;
+  --surface:         #F3F2EF;
+  --white:           #FFFFFF;
+  --text-primary:    #2D2D2D;
+  --text-secondary:  #6B6B6B;
+  --text-tertiary:   #737373;
+  --border:          #E5E4E1;
+
+  --status-pending:  #92600A;
+  --status-live:     #15803D;
+  --status-rejected: #DC2626;
+  --status-sold:     #0A0A0A;
+  --status-expired:  #71717A;
+  --status-hidden:   #5E6B7A;
+
+  /* next/font supplies --font-fraunces and --font-inter (see app/layout.tsx). */
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-ui:      var(--font-inter), sans-serif;
+  --font-body:    var(--font-inter), sans-serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  --radius-sm: 4px;
+
+  --dur-fast: 100ms;
+  --dur-base: 200ms;
+  --ease: ease;
+
+  /* Type scale. design-system.md defines these but components.html inlines the
+   * values, so they are tokenised here. Use the .text-* classes below. */
+  --size-h1:      32px;
+  --size-h2:      24px;
+  --size-h3:      18px;
+  --size-body:    16px;
+  --size-body-sm: 14px;
+  --size-caption: 12px;
+  --size-ui:      14px;
+
+  --lh-h1:      1.2;
+  --lh-h2:      1.3;
+  --lh-h3:      1.3;
+  --lh-body:    1.6;
+  --lh-body-sm: 1.5;
+  --lh-caption: 1.5;
+  --lh-ui:      1.4;
+
+  --container-max: 1280px;
+  --nav-height:    56px;
+
+  --z-base:   0;
+  --z-sticky: 100;
+  --z-drawer: 200;
+  --z-modal:  300;
+  --z-toast:  400;
+}
+
+@media (min-width: 1024px) {
+  :root { --nav-height: 64px; }
+}
+
+/* ── Reset / base ───────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-body);
+  font-size: var(--size-body);
+  color: var(--text-primary);
+  background: var(--canvas);
+  line-height: var(--lh-body);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+input, textarea, select { font-family: inherit; }
+img { max-width: 100%; display: block; }
+
+/* Focus ring — applies to all interactive elements. design-system.md requires
+ * this in addition to the border swap on inputs, never instead of it. */
+:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 2px;
+}
+
+/* ── Type scale ─────────────────────────────────────────── */
+/* Fraunces at 24px and above uses opsz 144 for calligraphic character; below
+ * that it is more upright and legible. The wordmark is always display opsz. */
+.text-h1 {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: var(--size-h1);
+  line-height: var(--lh-h1);
+  font-variation-settings: "opsz" 144;
+}
+.text-h2 {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: var(--size-h2);
+  line-height: var(--lh-h2);
+  font-variation-settings: "opsz" 144;
+}
+.text-h3 {
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: var(--size-h3);
+  line-height: var(--lh-h3);
+}
+.text-body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--size-body);
+  line-height: var(--lh-body);
+}
+.text-body-sm {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--size-body-sm);
+  line-height: var(--lh-body-sm);
+}
+.text-caption {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--size-caption);
+  line-height: var(--lh-caption);
+}
+.text-ui {
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: var(--size-ui);
+  line-height: var(--lh-ui);
+}
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1;
+  font-variation-settings: "opsz" 144;
+}
+
+/* ── Layout ─────────────────────────────────────────────── */
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+@media (min-width: 640px) {
+  .container { padding: 0 var(--space-5); }
+}
+@media (min-width: 1024px) {
+  .container { padding: 0 40px; }
+}
+
+/* ── Motion ─────────────────────────────────────────────── */
+/* design-system.md: wrap every transition in this query, and at rest suppress
+ * transitions entirely rather than substituting a 0.01ms kill. Component class
+ * names are listed as each component arrives. */
+@media (prefers-reduced-motion: no-preference) {
+  .btn-primary, .btn-secondary, .btn-whatsapp,
+  .filter-chip, .browse-card,
+  .input, .textarea, .toggle-btn,
+  .condition-option, .reason-option {
+    transition: border-color var(--dur-fast) var(--ease),
+                background var(--dur-fast) var(--ease),
+                color var(--dur-fast) var(--ease);
+  }
+  .toggle-track { transition: background var(--dur-base) var(--ease); }
+  .bottom-sheet { transition: transform var(--dur-base) var(--ease); }
+}

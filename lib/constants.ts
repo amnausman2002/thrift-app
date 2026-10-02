@@ -88,6 +88,83 @@ export const CONDITIONS: { value: ConditionValue; label: string; description: st
   { value: "fair", label: "Fair", description: "Shows some signs of wear — please photograph the areas that show it" },
 ];
 
+// Clothes XS-XL, shoes UK 3-9, bags have no size at all.
+export const CLOTHING_SIZES = ["XS", "S", "M", "L", "XL"] as const;
+
+export const SHOE_SIZES = ["UK 3", "UK 4", "UK 5", "UK 6", "UK 7", "UK 8", "UK 9"] as const;
+
+export type Size = (typeof CLOTHING_SIZES)[number] | (typeof SHOE_SIZES)[number];
+
+// Which size list each category uses. null means the category shows no size
+// field. Typed as a full Record<Category, ...> on purpose: adding a category to
+// CATEGORIES without deciding its sizes then fails the type check.
+export const SIZE_OPTIONS: Record<Category, readonly Size[] | null> = {
+  kurta: CLOTHING_SIZES,
+  pret: CLOTHING_SIZES,
+  co_ord_set: CLOTHING_SIZES,
+  dupatta: null, // A dupatta has no size, same as a bag.
+  dress: CLOTHING_SIZES,
+  top: CLOTHING_SIZES,
+  bottoms: CLOTHING_SIZES,
+  jeans: CLOTHING_SIZES,
+  skirt: CLOTHING_SIZES,
+  jacket: CLOTHING_SIZES,
+  sportswear: CLOTHING_SIZES,
+  shoes: SHOE_SIZES,
+  bag: null,
+};
+
+// Major Pakistani cities, roughly largest first so the likeliest answers sit at
+// the top of the dropdown. Covers all four provincial capitals, Islamabad, and
+// the Azad Kashmir and Gilgit-Baltistan centres.
+//
+// "other" is last and means a town that is not on this list — the north star is
+// a woman *anywhere* in Pakistan, so the list must never be a dead end. It
+// needs a free-text companion field to be useful, the same way brand "other"
+// pairs with brand_other. That field does not exist yet: see the TODO below.
+export const CITIES = [
+  { value: "karachi", label: "Karachi" },
+  { value: "lahore", label: "Lahore" },
+  { value: "faisalabad", label: "Faisalabad" },
+  { value: "rawalpindi", label: "Rawalpindi" },
+  { value: "islamabad", label: "Islamabad" },
+  { value: "gujranwala", label: "Gujranwala" },
+  { value: "peshawar", label: "Peshawar" },
+  { value: "multan", label: "Multan" },
+  { value: "hyderabad", label: "Hyderabad" },
+  { value: "quetta", label: "Quetta" },
+  { value: "bahawalpur", label: "Bahawalpur" },
+  { value: "sargodha", label: "Sargodha" },
+  { value: "sialkot", label: "Sialkot" },
+  { value: "sukkur", label: "Sukkur" },
+  { value: "larkana", label: "Larkana" },
+  { value: "sheikhupura", label: "Sheikhupura" },
+  { value: "rahim_yar_khan", label: "Rahim Yar Khan" },
+  { value: "jhang", label: "Jhang" },
+  { value: "dera_ghazi_khan", label: "Dera Ghazi Khan" },
+  { value: "gujrat", label: "Gujrat" },
+  { value: "sahiwal", label: "Sahiwal" },
+  { value: "wah_cantonment", label: "Wah Cantonment" },
+  { value: "mardan", label: "Mardan" },
+  { value: "kasur", label: "Kasur" },
+  { value: "okara", label: "Okara" },
+  { value: "mingora", label: "Mingora" },
+  { value: "nawabshah", label: "Nawabshah" },
+  { value: "chiniot", label: "Chiniot" },
+  { value: "abbottabad", label: "Abbottabad" },
+  { value: "mirpur_khas", label: "Mirpur Khas" },
+  { value: "muzaffarabad", label: "Muzaffarabad" },
+  { value: "mirpur", label: "Mirpur" },
+  { value: "gilgit", label: "Gilgit" },
+  { value: "other", label: "Other" },
+] as const;
+
+export type City = (typeof CITIES)[number]["value"];
+
+// TODO: city "other" needs a `city_other` free-text field on Listing, mirroring
+// brand_other. Adding it changes the domain model, so it needs a PRD update and
+// Bismah's agreement first (buyers see the city on browse and item detail).
+
 export const PHOTO_TIPS = [
   "Daylight",
   "Plain background",

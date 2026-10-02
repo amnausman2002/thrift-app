@@ -25,7 +25,7 @@ If this file and the PRD disagree, stop and ask us.
 ## Stack
 
 - Next.js (App Router) with TypeScript
-- Tailwind CSS — **intended, not installed yet.** Nothing built so far needs styling. Install it with the first real screen
+- Plain global CSS in `app/globals.css`, class names matching `components.html` exactly. **Tailwind was dropped:** the design system already existed as vanilla CSS with custom properties, so converting it would have added a package and a chance to drift. Fonts via `next/font/google`, self-hosted at build time
 - Firebase Authentication: email link sign-in for everyone, phone verification by SMS code for sellers
 - Cloud Firestore for data
 - Cloud Storage for Firebase for listing photos
@@ -220,13 +220,15 @@ If a Gemini call fails or is slow, the flow carries on without it. AI failure ne
 - Later milestone: log each AI read (what the AI suggested, what the seller finally submitted) so we can measure accuracy. Ask before creating that collection.
 - Accuracy testing: `eval/items.csv` does not exist yet. Once it does, re-run `scripts/try-prefill.ts` after every prompt change.
 
-## What is actually built (as of 2 October 2026, branch `ai-prefill`)
+## What is actually built (as of 2 October 2026, branch `foundations`)
 
 Everything else in this file is the plan, not the code. Do not assume a file exists because it is described here.
 
 **Working and tested end to end:**
 - `lib/ai/client.ts`, `GET /api/health/gemini` — Gemini on Vertex AI, location `global`, via Application Default Credentials
-- `lib/constants.ts` — brands (40 + `other` + `unknown`), 13 categories, 4 conditions, 5 photo tips
+- `lib/constants.ts` — brands (40 + `other` + `unknown`), 13 categories, 4 conditions, 5 photo tips, clothes and shoe sizes with `SIZE_OPTIONS` per category, 33 cities + `other`
+- `app/globals.css` + `app/layout.tsx` — every token from `design-system.md`, the type scale as `.text-*` classes, Fraunces and Inter self-hosted via `next/font/google`. Verified in the browser: tokens resolve, the type scale matches the spec, and both of Fraunces' variable axes (`opsz` and weight) are live
+- `design-system.md`, `components.html` — Bismah's design system and the 25-component visual reference
 - `lib/ai/schemas.ts` — both response schemas with matching Zod checks
 - `POST /api/ai/prefill` + `lib/ai/prefill.ts` — Call 1, including the server-side brand rules
 - `POST /api/ai/photo-quality` + `lib/ai/photo-quality.ts` — Call 2, all six flags
@@ -235,7 +237,7 @@ Everything else in this file is the plan, not the code. Do not assume a file exi
 - `app/dev/prefill/` — manual test page. Returns 404 in production, verified
 - `scripts/try-prefill.ts` — runs a folder of photos and prints a table
 
-**Not built at all yet:** Firebase (auth, Firestore, Storage), Tailwind and design tokens, every real screen, the buyer side, admin, natural-language search, the approval copilot, catalogue-photo detection, `eval/items.csv`.
+**Not built at all yet:** Firebase (auth, Firestore, Storage), `components/` (no React components exist — only the CSS reference in `components.html`), every real screen, the buyer side, admin, natural-language search, the approval copilot, catalogue-photo detection, the colour list, `eval/items.csv`.
 
 **Known gaps, decided deliberately — do not "fix" without asking:**
 - There is no suggested price anywhere. See the Price section above.
@@ -273,7 +275,7 @@ Full field lists are in the PRD under "Domain model". Do not add, rename or remo
 ## Fixed lists (all live in `lib/constants.ts`)
 
 - **Categories:** kurta, pret, co_ord_set, dupatta, dress, top, bottoms, jeans, skirt, jacket, sportswear, shoes, bag
-- **Sizes:** clothes XS to XL, shoes UK 3 to 9, bags have no size
+- **Sizes:** clothes XS to XL (`CLOTHING_SIZES`), shoes UK 3 to 9 (`SHOE_SIZES`). **Bags and dupattas have no size at all** and show no size field: `SIZE_OPTIONS` maps both to `null`. `SIZE_OPTIONS` is a full `Record<Category, ...>`, so adding a category without deciding its sizes fails the type check
 - **Condition** (always shown with its description):
   - `brand_new_with_tags`: Brand new with tags, "With tags, never worn"
   - `brand_new_without_tags`: Brand new without tags, "No tags, never worn"
@@ -288,20 +290,21 @@ Full field lists are in the PRD under "Domain model". Do not add, rename or remo
   - **`unknown` means the seller (or the AI) cannot tell the brand.** Its label for sellers is "Not sure / no label". Tags are often cut out, especially on leftover-store stock, so this is a normal choice and never an error. It is different from `other`, which means a brand that is not on the list and comes with `brand_other`.
   - **Buyer side:** an item with brand `unknown` shows no brand chip on its card or detail page (never the word "Unknown"), and `unknown` is left out of the brand filter options and out of natural-language search brand matching. An item with brand `other` shows its `brand_other` text.
   - The brand list will change as we see the real seed items. It lives only in `lib/constants.ts`. Never copy it into another file.
-- **Cities:** TODO: add the list
-- **Colours:** TODO: add the list
+- **Cities:** 33 major Pakistani cities, roughly largest first so the common answers sit at the top of the dropdown. All four provincial capitals, Islamabad, plus the Azad Kashmir and Gilgit-Baltistan centres. `CITIES` is a `{ value, label }` list because several names are multi-word (`rahim_yar_khan` to "Rahim Yar Khan").
+  - **`other` is last** and means a town that is not on the list. The north star is a woman *anywhere* in Pakistan, so the list must never be a dead end.
+  - **`other` has no free-text companion field yet.** It needs `city_other` on Listing, mirroring `brand_other`. That is a domain model change, so it needs a PRD update and Bismah's agreement first, because buyers see the city on browse and item detail.
+- **Colours:** TODO: add the list. Note that Call 1 already returns a `colour` value and `Listing.colour` is in the PRD, so this list is a real gap, not a nicety
 
 ## Design rules
 
 - Mobile-first. Build for a phone-width screen first, then scale up.
 - Minimal and close to black and white. No coloured buttons or calls to action: the clothes in the photos carry the colour.
-- Use design tokens only. Never hard-code a colour value or font size.
-  - Colours: TODO from the brand sheet
-  - Typography: TODO from the brand sheet
-  - Spacing and corner radius: TODO
-- Component names match Figma exactly. TODO: list them (e.g. ItemCard, FilterChip, PrimaryButton)
-- Reuse existing components. Never create a new button, card or input when one exists. If a variant is needed, ask.
-- Tone of voice: TODO from the brand sheet
+- **`design-system.md` is the source of truth for everything visual.** Read it before styling anything. Colours, type scale, spacing, radius, focus states, motion, z-index, voice and tone all live there. `components.html` is the matching visual reference: a standalone page showing all 25 components. Both were written by Bismah and are **shared** — ask before changing either.
+- Use design tokens only. Never hard-code a colour value or font size. Every token from `design-system.md` is in `app/globals.css` as a CSS custom property, plus `.text-h1` to `.text-ui` classes for the type scale.
+- Component names and CSS class names match `components.html` exactly, so either file can be used to find the other. Per-component CSS is lifted from it as each component is built, not rewritten.
+- Reuse existing components. Never create a new button, card or input when one exists. If a variant is needed, ask. If `components.html` has no design for something, stop and ask rather than inventing one.
+- No dark mode in v1, and no `prefers-color-scheme` handling. See `design-system.md`.
+- No em dashes in copy or UI strings (`design-system.md`). The one in the `fair` condition description in `lib/constants.ts` predates that rule and is a known exception.
 - AI suggestions must look clearly different from what the seller typed ("AI suggested" or "Please check"), and must be easy to change or clear.
 - Photo quality messages are calm and helpful ("This one looks a bit dark. Retake it?") with two equal choices, Retake and Keep it. Never disable the Next button.
 - WhatsApp message, prefilled: "Hi, I'm interested in your [item title] on Reloved."

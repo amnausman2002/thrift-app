@@ -13,3 +13,6 @@ next-env.d.ts
 .DS_Store
 *.pem
 npm-debug.log*
+
+# Local dev-server launch config for Claude Code
+.claude/launch.json
