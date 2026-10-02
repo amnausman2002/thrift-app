@@ -10,6 +10,26 @@ function mb(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 }
 
+type QualityFlag = {
+  photo_index: number;
+  blurry: boolean;
+  dark: boolean;
+  busy_background: boolean;
+  blends_into_background: boolean;
+  item_cropped: boolean;
+  crooked: boolean;
+};
+
+/** Seller-facing wording, so the labels here read the way the real form will. */
+const FLAG_LABELS: [keyof QualityFlag, string][] = [
+  ["blurry", "blurry"],
+  ["dark", "low light"],
+  ["busy_background", "busy background"],
+  ["blends_into_background", "blends into background"],
+  ["item_cropped", "not all in frame"],
+  ["crooked", "crooked"],
+];
+
 type Timing = { roundTripMs: number; serverMs?: number };
 
 type Results = {
@@ -119,7 +139,12 @@ export default function PrefillTester() {
     | undefined;
   const listing = prefillBody?.listing;
   const quality = results?.photoQuality.body as
-    | { flags?: { photo_index: number; blurry: boolean; dark: boolean; busy_background: boolean; item_cropped: boolean }[]; overallUsable?: boolean; retakeTip?: string; skipped?: boolean }
+    | {
+        flags?: QualityFlag[];
+        overallUsable?: boolean;
+        retakeTip?: string;
+        skipped?: boolean;
+      }
     | undefined;
 
   return (
@@ -229,12 +254,7 @@ export default function PrefillTester() {
             <Row label="retake tip" value={quality?.retakeTip || "—"} />
             {quality?.flags?.length ? (
               quality.flags.map((flag) => {
-                const hits = [
-                  flag.blurry && "blurry",
-                  flag.dark && "dark",
-                  flag.busy_background && "busy background",
-                  flag.item_cropped && "cropped",
-                ].filter(Boolean);
+                const hits = FLAG_LABELS.filter(([key]) => flag[key]).map(([, label]) => label);
                 return (
                   <Row
                     key={flag.photo_index}

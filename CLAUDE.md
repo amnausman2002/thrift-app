@@ -177,7 +177,9 @@ If a Gemini call fails or is slow, the flow carries on without it. AI failure ne
 - Revisit once there are enough real listings to work from. Until then the app must not imply it knows what an item is worth.
 
 **Call 2: `POST /api/ai/photo-quality`** (logic in `lib/ai/photo-quality.ts`)
-- Same input format. Uses `photoQualitySchema`: per photo, `photo_index`, `blurry`, `dark`, `busy_background`, `item_cropped`. Overall, `overall_usable` (true or false) and one short `retake_tip` in plain English.
+- Same input format. Uses `photoQualitySchema`: per photo, `photo_index`, `blurry`, `dark`, `busy_background`, `blends_into_background`, `item_cropped`, `crooked`. Overall, `overall_usable` (true or false) and one short `retake_tip` in plain English.
+- `busy_background` and `blends_into_background` are deliberately separate: a patterned bedsheet is clutter, a white shirt on a white sheet is invisible. Different problems, different advice.
+- `retake_tip` names the fix ("move somewhere with a plain background"), not just the fault. It never scolds and never implies she must redo anything.
 - Thinking level `LOW`, media resolution `MEDIUM` (it needs enough detail to judge sharpness).
 - The prompt must say: label or flaw close-ups are not "cropped", judge each photo independently, be lenient on plain fabric, never comment on people.
 - Advisory only. It returns flags and a tip and never blocks anything. On any error return `{ ok: true, flags: [], skipped: true }`.
