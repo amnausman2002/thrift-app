@@ -191,7 +191,7 @@ Three flows. Anything not sitting on one of them goes in the backlog file, which
 1. She taps Sell. No account yet.  
 2. She is prompted to upload photos or take them there, with short tips on what makes a photo work: daylight, plain background, the whole item in frame, a close-up of any flaw.  
 3. The AI checks the photos are usable — sharp enough, well lit, not too busy. If something is weak it says so and offers a retake. It never blocks her from continuing.  
-4. The AI reads the photos and fills in brand, category, colour, condition and a suggested price.  
+4. The AI reads the photos and fills in brand, category, colour and condition. It does not suggest a price — she sets her own asking price at step 6.  
 5. She corrects whatever is wrong. This is expected, not a failure — Pakistani brands are the hard case.  
 6. She picks which photo leads, adds size, city (pre-filled from her profile), asking price, fit note if the fit is unusual, and ticks whether it is a replica.  
 7. She taps Submit. Only now is she asked for her email and her phone number: email verified by link, phone verified by code.  
@@ -253,7 +253,7 @@ Four features, all of them on the critical paths rather than bolted on. The rule
 
 ### **1\. Photo to listing (seller side, already in Path 1\)**
 
-She uploads photos, the model checks they are usable and then fills in brand, category, colour, condition and a suggested price. She corrects whatever is wrong. This is the feature that removes the reason people list on Instagram instead — the form is the work, and this deletes most of it.
+She uploads photos, the model checks they are usable and then fills in brand, category, colour and condition. Price is hers alone: we suggest nothing until we have real sales to learn from. She corrects whatever is wrong. This is the feature that removes the reason people list on Instagram instead — the form is the work, and this deletes most of it.
 
 ### **2\. Natural-language search (buyer side)**
 

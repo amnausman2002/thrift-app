@@ -251,9 +251,11 @@ const result = await ai.models.generateContent({
   - Medium: fill it and add "Please check".
   - Low or unknown: leave it empty and show tappable chips.
   - Showing the evidence, for example "We read 'Khaadi' on the neck label", builds trust and makes a good demo moment.
-- **Suggested price in PKR (Pakistani rupees):**
+- **Suggested price in PKR (Pakistani rupees): NOT BUILT. Dropped on purpose.**
+  - The seller sets her own price and we suggest nothing. `lib/pricing.ts` and `lib/pricing-table.ts` were removed: our own numbers would have been invented too, just more quietly than the model's.
+  - Revisit when there are enough real listings and real sales to work from. The thinking below is kept for that day — do not build from it before then.
   - The model has no data on resale prices. If you ask it for a figure, it will make up a confident-sounding one.
-  - Compute the range on the server instead:
+  - If we do bring it back, compute the range on the server:
     1. Ask for the original price, optionally. Apply condition multipliers, starting with: brand_new_with_tags 55–70%, brand_new_without_tags 40–55%, very_good 30–45%, fair 20–30%.
     2. If there is no original price, use your own table of brand tier × category.
     3. Round to the nearest Rs 100 and show a *range*: "Similar items sell for Rs 2,200–3,000. You choose."

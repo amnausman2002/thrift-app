@@ -19,10 +19,9 @@ type Results = {
 
 const mono = { fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" };
 
-async function post(path: string, photos: File[], originalPrice: string) {
+async function post(path: string, photos: File[]) {
   const form = new FormData();
   for (const photo of photos) form.append("photos", photo);
-  if (originalPrice.trim() !== "") form.append("originalPrice", originalPrice.trim());
 
   const startedAt = performance.now();
   const response = await fetch(path, { method: "POST", body: form });
@@ -69,7 +68,6 @@ export default function PrefillTester() {
   const [prepMs, setPrepMs] = useState<number | null>(null);
   const [preparing, setPreparing] = useState(false);
   const [previews, setPreviews] = useState<string[]>([]);
-  const [originalPrice, setOriginalPrice] = useState("");
   const [busy, setBusy] = useState(false);
   const [results, setResults] = useState<Results | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -105,8 +103,8 @@ export default function PrefillTester() {
     try {
       // Both at once, so this waits only for the slower one.
       const [prefill, photoQuality] = await Promise.all([
-        post("/api/ai/prefill", photos, originalPrice),
-        post("/api/ai/photo-quality", photos, ""),
+        post("/api/ai/prefill", photos),
+        post("/api/ai/photo-quality", photos),
       ]);
       setResults({ prefill, photoQuality });
     } catch (err) {
@@ -120,8 +118,6 @@ export default function PrefillTester() {
     | { listing?: Record<string, string>; error?: string }
     | undefined;
   const listing = prefillBody?.listing;
-  const priceRange = (results?.prefill.body as { priceRange?: { min: number; max: number; isRough: boolean } | null } | undefined)
-    ?.priceRange;
   const quality = results?.photoQuality.body as
     | { flags?: { photo_index: number; blurry: boolean; dark: boolean; busy_background: boolean; item_cropped: boolean }[]; overallUsable?: boolean; retakeTip?: string; skipped?: boolean }
     | undefined;
@@ -137,19 +133,6 @@ export default function PrefillTester() {
       {/* Deliberately "image/*", not a list naming image/heic. Safari 17+ has a
           bug where listing image/heic makes it convert JPEGs *into* HEIC. */}
       <input type="file" accept="image/*" multiple onChange={(e) => onPick(e.target.files)} />
-
-      <div style={{ margin: "12px 0" }}>
-        <label style={{ fontSize: 14 }}>
-          Original price (optional, PKR){" "}
-          <input
-            type="number"
-            value={originalPrice}
-            onChange={(e) => setOriginalPrice(e.target.value)}
-            placeholder="8500"
-            style={{ width: 110, padding: 4 }}
-          />
-        </label>
-      </div>
 
       {preparing && <p style={{ color: "#666" }}>Converting and shrinking…</p>}
 
@@ -222,14 +205,6 @@ export default function PrefillTester() {
                 <Row label="colour" value={listing.colour} />
                 <Row label="flaws seen" value={listing.flaws_seen || "—"} />
                 <Row label="title" value={listing.title_suggestion || "—"} />
-                <Row
-                  label="suggested price"
-                  value={
-                    priceRange
-                      ? `Rs ${priceRange.min.toLocaleString()}–${priceRange.max.toLocaleString()}${priceRange.isRough ? " (rough)" : ""}`
-                      : "no suggestion"
-                  }
-                />
               </>
             ) : (
               // Say why. The reason is the whole point of this page.

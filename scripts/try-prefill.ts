@@ -81,7 +81,7 @@ async function main() {
       continue;
     }
 
-    const { listing, priceRange, latencyMs } = result;
+    const { listing, latencyMs } = result;
     latencies.push(latencyMs);
     if (listing.brand === "unknown") unknownBrand += 1;
     process.stderr.write(`${latencyMs} ms\n`);
@@ -95,7 +95,6 @@ async function main() {
       category: listing.category,
       condition: listing.condition,
       colour: listing.colour,
-      price: priceRange ? `${priceRange.min}-${priceRange.max}${priceRange.isRough ? " ~" : ""}` : "—",
       ms: latencyMs,
     });
   }
@@ -112,8 +111,6 @@ async function main() {
   console.log(`failed:         ${failed}`);
   console.log(`brand unknown:  ${unknownBrand} of ${items.length - failed} read (abstention rate)`);
   console.log(`median latency: ${median} ms`);
-  console.log("");
-  console.log("'~' on a price means a rough range from the table, not a share of an original price.");
 }
 
 main();

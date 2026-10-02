@@ -90,8 +90,6 @@ lib/
     runBoth.ts        Fires both seller calls at the same time
     images.ts         Shared photo checks and limits for both AI calls (server side)
   photos.ts           Browser-side HEIC conversion and resizing, before upload
-  pricing.ts          Suggested price range (our own rules, never the model)
-  pricing-table.ts    Hand-editable brand tier by category table
   constants.ts        Every fixed list (categories, sizes, conditions, reasons, brands, cities, photo tips)
 scripts/
   try-prefill.ts      Runs a folder of photos through the AI and prints a results table
@@ -141,7 +139,7 @@ Also out of v1: in-app notifications, analytics dashboards, and in the admin vie
 
 **The AI reads, drafts and flags. A person decides.**
 
-1. **Photo to listing (seller).** Reads the photos and prefills brand, category, colour, condition and a suggested price range. She can edit every field.
+1. **Photo to listing (seller).** Reads the photos and prefills brand, category, colour and condition. She can edit every field. It never suggests a price.
 2. **Photo quality check (seller).** A separate call from photo to listing. Checks the photos are usable (sharp, well lit, not too busy) and says so if not, but never blocks her from continuing.
 3. **Natural-language search (buyer).** Turns a sentence like "black Sapphire kurta under 3000 in medium" into filter values, shown as applied filter chips she can adjust. Only call the model when the query is not a plain keyword match, and debounce it. If nothing matches, relax a filter and say which one was relaxed.
 4. **Approval copilot (admin).** A short summary beside each pending listing: what the photos show, whether the stated brand looks consistent with the photos, whether the price is sane against the original, and any flaw in the description that is missing from the flaw field. A listing with brand `unknown` is normal and is never flagged. Only flag a brand the seller entered that the photos cannot back up, and only as a note for us, never a rejection.
@@ -154,7 +152,7 @@ If a Gemini call fails or is slow, the flow carries on without it. AI failure ne
 **Two separate Gemini calls, fired at the same time** (`lib/ai/runBoth.ts`, using `Promise.all`) so the seller only waits for the slower one.
 
 **Call 1: `POST /api/ai/prefill`** (logic in `lib/ai/prefill.ts`)
-- Input: 1 to 6 images as multipart form data (JPEG, PNG or WebP, up to 7 MB each) and an optional `originalPrice` number.
+- Input: 1 to 6 images as multipart form data (JPEG, PNG or WebP, up to 7 MB each). Nothing else: there is no `originalPrice`, because nothing uses it.
 - One Gemini call with all the images, structured output using `listingDraftSchema`, thinking level `LOW`, media resolution `MEDIUM`, 15 second timeout, one retry only on HTTP errors 429 or 503.
 - `listingDraftSchema` fields: brand, brand_other, brand_evidence, brand_confidence, category, category_confidence, colour, condition, condition_confidence, flaws_seen, title_suggestion. Every list comes from `lib/constants.ts` and includes `unknown`. There is **no price field**: the model never sets a price.
 - On validation failure or any error, return `{ ok: false }` with a short message. Never throw an unhandled error.
@@ -174,11 +172,9 @@ If a Gemini call fails or is slow, the flow carries on without it. AI failure ne
 - Suggestions fill empty fields only. Never overwrite something she has typed.
 - Where possible show the evidence, for example "We read 'Khaadi' on the neck label".
 
-**Suggested price (`lib/pricing.ts`, our own rules, not Gemini):**
-- With an original price, the suggested range is a share of it: `brand_new_with_tags` 55 to 70%, `brand_new_without_tags` 40 to 55%, `very_good` 30 to 45%, `fair` 20 to 30%.
-- Without one, use the brand tier by category table in `lib/pricing-table.ts`, which we edit by hand. It has an "unbranded" tier used when brand is `unknown` or `other`, and that output is labelled a rough range.
-- Round to the nearest Rs 100 and always show a range, never a single number. She decides the final price.
-- The numbers are starting guesses, and `lib/pricing-table.ts` says so in a comment at the top.
+**Price: the seller types it herself. We suggest nothing.**
+- There is no suggested price, no price range and no pricing table. Removed deliberately: any guess we made would be invented rather than drawn from real sales.
+- Revisit once there are enough real listings to work from. Until then the app must not imply it knows what an item is worth.
 
 **Call 2: `POST /api/ai/photo-quality`** (logic in `lib/ai/photo-quality.ts`)
 - Same input format. Uses `photoQualitySchema`: per photo, `photo_index`, `blurry`, `dark`, `busy_background`, `item_cropped`. Overall, `overall_usable` (true or false) and one short `retake_tip` in plain English.

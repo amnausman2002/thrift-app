@@ -13,7 +13,6 @@ import {
   type ImagePart,
 } from "@/lib/ai/images";
 import { BRANDS } from "@/lib/constants";
-import { suggestPrice, type PriceRange } from "@/lib/pricing";
 
 const SYSTEM_INSTRUCTION = `You help women in Pakistan list preloved clothing on Reloved. You draft; a person decides.
 Accuracy matters more than filling every field. When you are not sure, say "unknown".
@@ -49,7 +48,6 @@ export type PrefillResult =
   | {
       ok: true;
       listing: ListingDraft;
-      priceRange: PriceRange | null;
       latencyMs: number;
     }
   | {
@@ -62,7 +60,6 @@ export type PrefillResult =
 
 export type PrefillInput = {
   photos: File[];
-  originalPrice?: number;
 };
 
 async function generateDraft(imageParts: ImagePart[]) {
@@ -91,7 +88,7 @@ export function applyBrandRules(listing: ListingDraft): ListingDraft {
   return listing;
 }
 
-export async function runPrefill({ photos, originalPrice }: PrefillInput): Promise<PrefillResult> {
+export async function runPrefill({ photos }: PrefillInput): Promise<PrefillResult> {
   const inputError = validatePhotos(photos);
   if (inputError) {
     return { ok: false, reason: "input", error: inputError };
@@ -120,17 +117,9 @@ export async function runPrefill({ photos, originalPrice }: PrefillInput): Promi
       return { ok: false, reason: "ai", error: "The model's answer was not in the expected shape." };
     }
 
-    const listing = applyBrandRules(parsed.data);
-
     return {
       ok: true,
-      listing,
-      priceRange: suggestPrice({
-        condition: listing.condition,
-        brand: listing.brand,
-        category: listing.category,
-        originalPrice,
-      }),
+      listing: applyBrandRules(parsed.data),
       latencyMs: Date.now() - startedAt,
     };
   } catch (error) {

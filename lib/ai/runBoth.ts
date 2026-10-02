@@ -6,7 +6,6 @@ import { runPhotoQuality, type PhotoQualityResult } from "@/lib/ai/photo-quality
 
 export type RunBothInput = {
   photos: File[];
-  originalPrice?: number;
 };
 
 export type RunBothResult = {
@@ -17,9 +16,9 @@ export type RunBothResult = {
 /** Safe with Promise.all: neither call throws. Prefill reports failure as
  *  ok: false, and the quality check reports it as skipped, so one failing
  *  never cancels the other. */
-export async function runBoth({ photos, originalPrice }: RunBothInput): Promise<RunBothResult> {
+export async function runBoth({ photos }: RunBothInput): Promise<RunBothResult> {
   const [prefill, photoQuality] = await Promise.all([
-    runPrefill({ photos, originalPrice }),
+    runPrefill({ photos }),
     runPhotoQuality({ photos }),
   ]);
 

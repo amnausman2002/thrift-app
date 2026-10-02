@@ -17,17 +17,7 @@ export async function POST(request: Request) {
 
   const photos = form.getAll("photos").filter((value): value is File => value instanceof File);
 
-  const rawOriginalPrice = form.get("originalPrice");
-  const originalPrice =
-    typeof rawOriginalPrice === "string" && rawOriginalPrice.trim() !== ""
-      ? Number(rawOriginalPrice)
-      : undefined;
-
-  if (originalPrice !== undefined && !Number.isFinite(originalPrice)) {
-    return NextResponse.json({ ok: false, error: "originalPrice must be a number." }, { status: 400 });
-  }
-
-  const result = await runPrefill({ photos, originalPrice });
+  const result = await runPrefill({ photos });
 
   // A bad request is the caller's mistake, so it gets a 400. An AI failure
   // returns 200: the seller keeps filling the form by hand, nothing is broken.
