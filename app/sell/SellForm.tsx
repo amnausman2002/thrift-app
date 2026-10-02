@@ -35,6 +35,19 @@ import type { Category, City, ConditionValue, Size } from "@/lib/constants";
 
 type SellPhoto = GridPhoto & { file: File };
 
+/** A local id for a photo in this form, nothing to do with the Listing id.
+ *
+ *  crypto.randomUUID() exists only in a secure context, so it is there on
+ *  localhost and on https but undefined when the phone opens the dev server
+ *  over http on the local network. That is exactly how we test on a real
+ *  phone, so fall back rather than throw. */
+function photoId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `photo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 /** Turn a snake_case constant into something readable, for the category list. */
 function titleCase(value: string): string {
   return value.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
@@ -77,7 +90,7 @@ export default function SellForm() {
     // original and sets `problem`.
     const prepared = await preparePhotos(files);
     const added: SellPhoto[] = prepared.map((item) => ({
-      id: crypto.randomUUID(),
+      id: photoId(),
       url: URL.createObjectURL(item.file),
       problem: item.problem,
       file: item.file,
