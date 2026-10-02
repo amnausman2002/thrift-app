@@ -469,3 +469,157 @@ img { max-width: 100%; display: block; }
   padding: 2px 6px;
   border-radius: var(--radius-sm);
 }
+
+/* ── Photo upload grid (components.html section 10) ──────── */
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+}
+.photo-slot {
+  aspect-ratio: 1;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  font-size: 10px;
+  /* ADDED: slots are <button>/<label> now, so clear the UA button styling. */
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  text-align: center;
+}
+.photo-slot.has-photo { border-style: solid; }
+.photo-slot.is-cover { border: 2px solid var(--text-primary); }
+.photo-slot.is-selected { border: 2px solid var(--text-secondary); }
+/* ADDED: an empty slot past the next one is shown dimmed. components.html does
+ * this with an inline style on the mock. */
+.photo-slot.is-placeholder { opacity: 0.3; cursor: default; }
+/* ADDED: the photo itself. The mock had no real images in it. */
+.photo-slot-img { width: 100%; height: 100%; object-fit: cover; }
+.photo-slot-add { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
+.photo-slot-add-icon { color: var(--text-tertiary); }
+.photo-slot-add-text { font-family: var(--font-ui); font-weight: 500; font-size: var(--size-caption); color: var(--text-tertiary); }
+.photo-slot-remove {
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 18px; height: 18px;
+  background: var(--text-primary);
+  color: var(--white);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  z-index: 1;
+}
+.photo-slot-cover-label {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: var(--text-primary);
+  color: var(--white);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: var(--size-caption);
+  text-align: center;
+  padding: 3px 4px;
+}
+.photo-slot-set-cover {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: var(--canvas);
+  border-top: 1px solid var(--border);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: var(--size-caption);
+  text-align: center;
+  padding: 3px 4px;
+  cursor: pointer;
+  border-left: none; border-right: none; border-bottom: none;
+  width: 100%;
+  z-index: 1;
+}
+.photo-grid-hint {
+  font-size: var(--size-caption);
+  color: var(--text-tertiary);
+  text-align: center;
+  margin-top: var(--space-2);
+}
+/* ADDED: a quiet per-photo note, for when preparing the photo had a problem.
+ * Advisory only, exactly like quality flags: it never blocks submission. */
+.photo-slot-problem {
+  position: absolute;
+  top: 4px; left: 4px;
+  background: rgba(45, 45, 45, 0.6);
+  color: var(--white);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: var(--size-micro);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Condition picker (components.html section 11) ───────── */
+.condition-picker { display: flex; flex-direction: column; gap: var(--space-1); }
+.condition-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  min-height: 44px;
+}
+.condition-option.selected { border-color: var(--text-primary); }
+/* ADDED: the real radio inside is visually hidden, so the focus ring has to be
+ * drawn on the row instead. */
+.condition-option:has(:focus-visible) {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 2px;
+}
+.condition-radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+.condition-option.selected .condition-radio { border-color: var(--text-primary); }
+.condition-radio-dot {
+  display: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-primary);
+}
+.condition-option.selected .condition-radio-dot { display: block; }
+.condition-text { display: flex; flex-direction: column; gap: 2px; }
+.condition-text-label { font-family: var(--font-ui); font-weight: 500; font-size: var(--size-ui); }
+.condition-text-desc { font-size: var(--size-meta); color: var(--text-secondary); }
+
+/* ── Utility ────────────────────────────────────────────── */
+/* Visually hidden but still reachable by keyboard and screen readers. Used for
+ * the real <input type="radio"> behind the condition picker. */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

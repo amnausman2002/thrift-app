@@ -230,6 +230,7 @@ Everything else in this file is the plan, not the code. Do not assume a file exi
 - `app/globals.css` + `app/layout.tsx` — every token from `design-system.md`, the type scale as `.text-*` classes, Fraunces and Inter self-hosted via `next/font/google`. Verified in the browser: tokens resolve, the type scale matches the spec, and both of Fraunces' variable axes (`opsz` and weight) are live
 - `design-system.md`, `components.html` — Bismah's design system and the 25-component visual reference
 - `components/ui/` — the 8 shared components, ported from `components.html` with its class names unchanged: `PrimaryButton`, `SecondaryButton`, `TextLink`, `Input`, `Textarea`, `FilterChip` (+ `ChipRow`), `StatusChip`, `BottomSheet`. Checked in a browser against the showcase
+- `components/seller/` — `PhotoGrid` (+ `PhotoSlot`) and `ConditionPicker`, ported from `components.html` sections 10 and 11. The grid is both the uploader and the cover picker, because the showcase draws them as two states of one grid. Photo count limits for a *listing* are `MIN_LISTING_PHOTOS`/`MAX_LISTING_PHOTOS` in `lib/constants.ts`, deliberately separate from the AI call's `MIN_PHOTOS`/`MAX_PHOTOS` in `lib/ai/images.ts`
 - `app/dev/ui/` — gallery of the above, for comparing against `components.html`. 404s in production, verified
 - `lib/ai/schemas.ts` — both response schemas with matching Zod checks
 - `POST /api/ai/prefill` + `lib/ai/prefill.ts` — Call 1, including the server-side brand rules
@@ -248,6 +249,9 @@ Everything else in this file is the plan, not the code. Do not assume a file exi
 - Three off-scale font sizes (`--size-sheet-body` 15px, `--size-meta` 13px, `--size-micro` 11px) were tokenised. `design-system.md` specifies the values but does not name them.
 - `TextLink` renders a real `<a>` when given `href`. `components.html` only has the `<button>` form, but two of its uses ("View my listings", "List another item") navigate.
 - States added that `design-system.md` specifies but `components.html` has no CSS for: `:disabled` on inputs, textareas and chips, the error border on `.textarea`, and suppressing the hover invert on a disabled button.
+- `ConditionPicker` rows are a `<label>` around a visually hidden real `<input type="radio">`, not `<div>`s. That buys native radio behaviour: arrow keys move between options, only one can be chosen, and a screen reader announces "2 of 4". The focus ring is drawn on the row with `:has(:focus-visible)` since the input itself is hidden.
+- `PhotoSlot` and its overlay controls are `<button>`s, not `<div>`s. The remove control is a sibling positioned over the slot rather than a child, because a button cannot contain another button.
+- Photo grid additions `components.html` mocks with inline styles or omits: `.photo-slot.is-placeholder` for the dimmed empty cells, `.photo-slot-img` for the actual photo, and `.photo-slot-problem` for a quiet per-photo note when `preparePhotos` kept the original. All advisory, none blocking.
 
 **The condition scale was a real conflict, now settled.** `components.html` had Brand new / Excellent / Very good / Good, where "Excellent" meant "no tags, worn a few times". The PRD and `lib/constants.ts` say `brand_new_without_tags` means "no tags, never worn". Different items, not different wording. **The PRD wins**; Amna is updating `components.html`. Do not change `CONDITION_VALUES` or `CONDITIONS` in `lib/constants.ts`: they also feed the Gemini prefill schema.
 

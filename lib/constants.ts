@@ -88,6 +88,13 @@ export const CONDITIONS: { value: ConditionValue; label: string; description: st
   { value: "fair", label: "Fair", description: "Shows some signs of wear — please photograph the areas that show it" },
 ];
 
+// Photos per listing, enforced at submit, with exactly one cover.
+// Deliberately NOT the same as MIN_PHOTOS/MAX_PHOTOS in lib/ai/images.ts: the
+// AI call accepts a single photo so it can read early while she is still
+// adding more. A finished listing needs two. Different rules, both correct.
+export const MIN_LISTING_PHOTOS = 2;
+export const MAX_LISTING_PHOTOS = 6;
+
 // Listing status. Only admins set `live` and `rejected`. Browse shows `live`
 // only, newest first.
 export const LISTING_STATUSES = [

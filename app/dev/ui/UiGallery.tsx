@@ -10,11 +10,29 @@ import FilterChip from "@/components/ui/FilterChip";
 import ChipRow from "@/components/ui/ChipRow";
 import StatusChip from "@/components/ui/StatusChip";
 import BottomSheet from "@/components/ui/BottomSheet";
+import PhotoGrid from "@/components/seller/PhotoGrid";
+import ConditionPicker from "@/components/seller/ConditionPicker";
+import type { GridPhoto } from "@/components/seller/PhotoSlot";
 import { LISTING_STATUSES, CLOTHING_SIZES } from "@/lib/constants";
+import type { ConditionValue } from "@/lib/constants";
+
+// A 1x1 grey pixel, so the grid can be exercised without picking real files.
+const STUB =
+  "data:image/svg+xml," +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#d8d6d1"/></svg>',
+  );
 
 export default function UiGallery() {
   const [size, setSize] = useState<string | null>("M");
   const [sheet, setSheet] = useState<null | "confirm" | "advisory">(null);
+  const [condition, setCondition] = useState<ConditionValue | null>("very_good");
+  const [photos, setPhotos] = useState<GridPhoto[]>([
+    { id: "a", url: STUB },
+    { id: "b", url: STUB },
+    { id: "c", url: STUB, problem: "Kept the original" },
+  ]);
+  const [coverId, setCoverId] = useState<string | null>("a");
 
   return (
     <main style={{ maxWidth: 800, margin: "0 auto", padding: "var(--space-8) var(--space-4)" }}>
@@ -60,6 +78,46 @@ export default function UiGallery() {
           {LISTING_STATUSES.map((s) => (
             <StatusChip key={s} status={s} />
           ))}
+        </div>
+      </Section>
+
+      <Section title="Photo grid and cover picker">
+        <div style={{ maxWidth: 375 }}>
+          <PhotoGrid
+            photos={photos}
+            coverId={coverId}
+            onAdd={(files) => {
+              const added = files.map((file, i) => ({
+                id: `${Date.now()}-${i}`,
+                url: URL.createObjectURL(file),
+              }));
+              setPhotos((current) => {
+                const next = [...current, ...added];
+                if (!coverId && next.length > 0) setCoverId(next[0].id);
+                return next;
+              });
+            }}
+            onRemove={(id) =>
+              setPhotos((current) => {
+                const next = current.filter((p) => p.id !== id);
+                if (id === coverId) setCoverId(next[0]?.id ?? null);
+                return next;
+              })
+            }
+            onSetCover={setCoverId}
+          />
+          <p className="text-caption" style={{ marginTop: "var(--space-2)", color: "var(--text-tertiary)" }}>
+            {photos.length} photo(s), cover: {coverId ?? "none"}
+          </p>
+        </div>
+      </Section>
+
+      <Section title="Condition picker">
+        <div style={{ maxWidth: 375 }}>
+          <ConditionPicker value={condition} onChange={setCondition} />
+          <p className="text-caption" style={{ marginTop: "var(--space-2)", color: "var(--text-tertiary)" }}>
+            Selected: {condition ?? "none"}
+          </p>
         </div>
       </Section>
 
