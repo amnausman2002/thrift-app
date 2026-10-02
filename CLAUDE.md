@@ -25,7 +25,7 @@ If this file and the PRD disagree, stop and ask us.
 ## Stack
 
 - Next.js (App Router) with TypeScript
-- Tailwind CSS
+- Tailwind CSS — **intended, not installed yet.** Nothing built so far needs styling. Install it with the first real screen
 - Firebase Authentication: email link sign-in for everyone, phone verification by SMS code for sellers
 - Cloud Firestore for data
 - Cloud Storage for Firebase for listing photos
@@ -59,7 +59,23 @@ gcloud services enable aiplatform.googleapis.com
 Environment variables in `.env.local` (never committed, listed without values in `.env.example`):
 `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION=global`, `GEMINI_MODEL`.
 
-TODO: run, test and deploy commands, filled in by Claude once the project is set up.
+Day to day:
+
+```
+npm install                      First time, and after pulling new packages
+npm run dev                      Starts the app at http://localhost:3000
+npm run build                    Production build. Run before claiming anything works
+npx tsc --noEmit                 Type check on its own
+npm run try-prefill -- ./photos  Runs a folder of photos through Call 1, prints a table
+```
+
+Check Gemini is reachable: open `http://localhost:3000/api/health/gemini`. It should
+return `{"ok":true,...,"reply":"ok"}`. If it does not, your login has probably expired —
+run `gcloud auth application-default login` again.
+
+Try the seller AI by hand: `http://localhost:3000/dev/prefill` (development only, 404s in production).
+
+TODO: deploy commands, once App Hosting is set up.
 
 ## Folder structure
 
@@ -75,7 +91,8 @@ app/                  Pages and routes
   api/ai/
     prefill/          Call 1: photos to listing fields
     photo-quality/    Call 2: separate photo quality check
-  dev/prefill/          Throwaway test page. Development only, never linked, never deployed
+  api/health/gemini/  Checks the Gemini connection is working
+  dev/prefill/        Throwaway test page. Development only, never linked, never deployed
 components/
   ui/                 Shared components. Names match Figma exactly
   buyer/  seller/  admin/
@@ -93,13 +110,14 @@ lib/
   constants.ts        Every fixed list (categories, sizes, conditions, reasons, brands, cities, photo tips)
 scripts/
   try-prefill.ts      Runs a folder of photos through the AI and prints a results table
-eval/
-  items.csv           Real test items with the correct answers, used to measure AI accuracy
 docs/
   PRD.md              Product spec
   seller-flow-research.md   Technical plan for the seller flow
-  BACKLOG.md          Ideas for later. Never read or build from this file
 ```
+
+Planned but not created yet, so do not expect to find them: `components/`, `lib/firebase/`,
+`lib/data/`, `app/sell/`, `app/browse/`, `app/item/`, `app/seller/`, `app/my-listings/`,
+`app/admin/`, `eval/items.csv`, `docs/BACKLOG.md`.
 
 ## How to work with us
 
@@ -140,7 +158,7 @@ Also out of v1: in-app notifications, analytics dashboards, and in the admin vie
 **The AI reads, drafts and flags. A person decides.**
 
 1. **Photo to listing (seller).** Reads the photos and prefills brand, category, colour and condition. She can edit every field. It never suggests a price.
-2. **Photo quality check (seller).** A separate call from photo to listing. Checks the photos are usable (sharp, well lit, not too busy) and says so if not, but never blocks her from continuing.
+2. **Photo quality check (seller).** A separate call from photo to listing. Checks the photos are usable (sharp, well lit, whole item in frame, straight, and standing out from the background) and says so if not, but never blocks her from continuing.
 3. **Natural-language search (buyer).** Turns a sentence like "black Sapphire kurta under 3000 in medium" into filter values, shown as applied filter chips she can adjust. Only call the model when the query is not a plain keyword match, and debounce it. If nothing matches, relax a filter and say which one was relaxed.
 4. **Approval copilot (admin).** A short summary beside each pending listing: what the photos show, whether the stated brand looks consistent with the photos, whether the price is sane against the original, and any flaw in the description that is missing from the flaw field. A listing with brand `unknown` is normal and is never flagged. Only flag a brand the seller entered that the photos cannot back up, and only as a note for us, never a rejection.
 5. **Catalogue-photo detection (admin).** Flags listings that look like a brand's studio photo instead of a real one. A flag in the queue only, never a rejection.
@@ -153,6 +171,7 @@ If a Gemini call fails or is slow, the flow carries on without it. AI failure ne
 
 **Call 1: `POST /api/ai/prefill`** (logic in `lib/ai/prefill.ts`)
 - Input: 1 to 6 images as multipart form data (JPEG, PNG or WebP, up to 7 MB each). Nothing else: there is no `originalPrice`, because nothing uses it.
+- The API accepts a single photo so the AI can read early, while she is still adding more. A finished *listing* still needs 2 to 6. Different rules, both correct.
 - One Gemini call with all the images, structured output using `listingDraftSchema`, thinking level `LOW`, media resolution `MEDIUM`, 15 second timeout, one retry only on HTTP errors 429 or 503.
 - `listingDraftSchema` fields: brand, brand_other, brand_evidence, brand_confidence, category, category_confidence, colour, condition, condition_confidence, flaws_seen, title_suggestion. Every list comes from `lib/constants.ts` and includes `unknown`. There is **no price field**: the model never sets a price.
 - On validation failure or any error, return `{ ok: false }` with a short message. Never throw an unhandled error.
@@ -183,15 +202,47 @@ If a Gemini call fails or is slow, the flow carries on without it. AI failure ne
 - Thinking level `LOW`, media resolution `MEDIUM` (it needs enough detail to judge sharpness).
 - The prompt must say: label or flaw close-ups are not "cropped", judge each photo independently, be lenient on plain fabric, never comment on people.
 - Advisory only. It returns flags and a tip and never blocks anything. On any error return `{ ok: true, flags: [], skipped: true }`.
-- The result is saved in `Photo.quality_flags`.
+- The result will be saved in `Photo.quality_flags`. Not wired up yet: there is no Firestore in the project so far.
+- The model does not reliably return one entry per photo. Never assume `flags.length === photos.length`, and match on `photo_index`.
 
 **Photo tips shown on the upload screen** (`PHOTO_TIPS` in `lib/constants.ts`): daylight, plain background, the whole item in frame, a close-up of any flaw, and "If there is a label or tag, take a close-up of it."
 
+**Photos are prepared in the browser before upload** (`lib/photos.ts`)
+- Phones hand over HEIC, which Chrome, Firefox and Edge cannot display, and 3-6 MB files. `preparePhotos()` converts HEIC to JPEG (`heic2any`, loaded only when a HEIC appears) and resizes to 1,600 px at quality 0.8 (`browser-image-compression`, in a worker). A 6 MB photo becomes about 0.2 MB.
+- This also strips EXIF, so a seller's home GPS location never leaves her phone.
+- It never throws. If conversion or resizing fails, the original photo is kept and a `problem` message is set.
+- **File pickers must use `accept="image/*"`. Never list `image/heic`:** Safari 17+ then converts JPEGs *into* HEIC, creating the problem we are solving.
+- The server limits (`lib/ai/images.ts`: 1-6 photos, JPEG/PNG/WebP, 7 MB each) are unchanged and still enforced. The browser makes photos usable; the server is what makes them trusted.
+
 **Current status of the AI routes (temporary):**
 - `/api/ai/prefill` and `/api/ai/photo-quality` have no sign-in check and no spending protection yet. Run them on a laptop only. Do not deploy them publicly until sign-in, App Check, rate limits and budget alerts are added (see `docs/seller-flow-research.md`, milestone M6). If they must be deployed sooner, add a temporary secret-header check first.
-- For now photos are sent directly in the request. Cloud Storage upload and photo compression come later.
+- Photos are sent inline in the request. Cloud Storage upload comes later. Browser-side conversion and resizing are done (`lib/photos.ts`).
 - Later milestone: log each AI read (what the AI suggested, what the seller finally submitted) so we can measure accuracy. Ask before creating that collection.
-- Accuracy testing: `eval/items.csv` holds real items with the correct answers. Re-run `scripts/try-prefill.ts` after every prompt change.
+- Accuracy testing: `eval/items.csv` does not exist yet. Once it does, re-run `scripts/try-prefill.ts` after every prompt change.
+
+## What is actually built (as of 2 October 2026, branch `ai-prefill`)
+
+Everything else in this file is the plan, not the code. Do not assume a file exists because it is described here.
+
+**Working and tested end to end:**
+- `lib/ai/client.ts`, `GET /api/health/gemini` — Gemini on Vertex AI, location `global`, via Application Default Credentials
+- `lib/constants.ts` — brands (40 + `other` + `unknown`), 13 categories, 4 conditions, 5 photo tips
+- `lib/ai/schemas.ts` — both response schemas with matching Zod checks
+- `POST /api/ai/prefill` + `lib/ai/prefill.ts` — Call 1, including the server-side brand rules
+- `POST /api/ai/photo-quality` + `lib/ai/photo-quality.ts` — Call 2, all six flags
+- `lib/ai/runBoth.ts` — fires both at once. No HTTP route of its own yet, on purpose
+- `lib/photos.ts` — browser HEIC conversion and resizing
+- `app/dev/prefill/` — manual test page. Returns 404 in production, verified
+- `scripts/try-prefill.ts` — runs a folder of photos and prints a table
+
+**Not built at all yet:** Firebase (auth, Firestore, Storage), Tailwind and design tokens, every real screen, the buyer side, admin, natural-language search, the approval copilot, catalogue-photo detection, `eval/items.csv`.
+
+**Known gaps, decided deliberately — do not "fix" without asking:**
+- There is no suggested price anywhere. See the Price section above.
+- `original_price` is still a **Listing** field the seller types herself, shown to buyers and used by the admin copilot. The AI prefill call no longer takes an `originalPrice` parameter. These are different things: do not delete the Listing field.
+- A 504 from Gemini is **not** retried; only 429 and 503 are. A real 504 has been seen in testing. Open question.
+- Photos have only ever been tested against generated test images, never real clothing. **The prompts are unproven.** Testing with real garment photos is the next useful thing anyone can do.
+- `lib/pricing.ts` and `lib/pricing-table.ts` were deleted on purpose. Do not recreate them.
 
 ## Users and permissions
 
