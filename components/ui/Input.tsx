@@ -1,7 +1,7 @@
 "use client";
 
 import { useId } from "react";
-import type { InputHTMLAttributes } from "react";
+import type { InputHTMLAttributes, ReactNode } from "react";
 
 // .input from components.html, with its .input-label, .input-hint and
 // .input-error-msg siblings bundled in so a labelled field is one component.
@@ -11,7 +11,8 @@ import type { InputHTMLAttributes } from "react";
 // a screen reader cannot name it. Pass `id` to override.
 
 type Props = {
-  label?: string;
+  /** Usually a string; ReactNode so a label can carry an "(optional)" span. */
+  label?: ReactNode;
   hint?: string;
   /** When set, the border turns red and the message shows under the field. */
   error?: string;

@@ -1,14 +1,15 @@
 "use client";
 
 import { useId } from "react";
-import type { TextareaHTMLAttributes } from "react";
+import type { TextareaHTMLAttributes, ReactNode } from "react";
 
 // .textarea from components.html. Same label, hint and error treatment as
 // Input, so the two line up on a form. Vertically resizable, 96px minimum.
 // Used for the fit note and the description.
 
 type Props = {
-  label?: string;
+  /** Usually a string; ReactNode so a label can carry an "(optional)" span. */
+  label?: ReactNode;
   hint?: string;
   error?: string;
 } & TextareaHTMLAttributes<HTMLTextAreaElement>;
