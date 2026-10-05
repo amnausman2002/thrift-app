@@ -14,6 +14,10 @@ export type GridPhoto = {
   url: string;
   /** Carried through from preparePhotos. Advisory, never blocks submission. */
   problem?: string;
+  /** A two-word note from the photo quality check, for example "Dark, blurry".
+   *  Also advisory. Takes the corner over `problem` when both are set, because
+   *  what the photo looks like matters more to her than how it was converted. */
+  note?: string;
 };
 
 type Props = {
@@ -55,7 +59,9 @@ export default function PhotoSlot({
       >
         <img className="photo-slot-img" src={photo.url} alt="" />
         {isCover && <span className="photo-slot-cover-label">Cover</span>}
-        {photo.problem && <span className="photo-slot-problem">Check</span>}
+        {(photo.note || photo.problem) && (
+          <span className="photo-slot-problem">{photo.note ?? "Check"}</span>
+        )}
       </button>
 
       {/* Sibling rather than a child: a button cannot contain another button. */}

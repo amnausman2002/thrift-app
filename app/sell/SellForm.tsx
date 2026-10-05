@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import PrimaryButton from "@/components/ui/PrimaryButton";
 import TextLink from "@/components/ui/TextLink";
 import Input from "@/components/ui/Input";
@@ -9,127 +9,83 @@ import Select from "@/components/ui/Select";
 import FilterChip from "@/components/ui/FilterChip";
 import ChipRow from "@/components/ui/ChipRow";
 import BottomSheet from "@/components/ui/BottomSheet";
-import PhotoGrid from "@/components/seller/PhotoGrid";
 import ConditionPicker from "@/components/seller/ConditionPicker";
 import ReplicaPicker from "@/components/seller/ReplicaPicker";
-import type { GridPhoto } from "@/components/seller/PhotoSlot";
-import { preparePhotos } from "@/lib/photos";
+import { AiMark, CouldItBe } from "./AiHints";
+import { brandEvidenceLabel, type Prefilled } from "./prefillToForm";
+import type { FormFields, SellPhoto } from "./types";
 import {
+  BRANDS,
   CATEGORIES,
   CITIES,
+  CONDITIONS,
   SIZE_OPTIONS,
-  MIN_LISTING_PHOTOS,
-  PHOTO_TIPS,
+  brandLabel,
+  categoryLabel,
 } from "@/lib/constants";
-import type { Category, City, ConditionValue, Size } from "@/lib/constants";
+import type { Brand, Category, City, ConditionValue, Size } from "@/lib/constants";
 
-// Path 1, step 6: she picks which photo leads, adds size, city, asking price,
-// a fit note if the fit is unusual, and ticks whether it is a replica.
+// Everything that is not a photo. Photos and the AI read happen on the two
+// steps before this one, so by the time she gets here the form is already part
+// filled and her job is to correct it rather than compose it.
 //
-// Two fields beyond that list are here because the five do not work without
-// them: category, which decides whether a size field is shown at all and which
-// sizes, and title, which is how a listing is identified in the queue and on
-// the confirmation. Brand, colour and description arrive with the AI prefill.
+// Fields marked with AiMark were filled by Call 1. Fields with a "Could it
+// be...?" chip were left empty on purpose, because confidence was low.
 //
 // There is no suggested price and no price range. She types her own.
 
-type SellPhoto = GridPhoto & { file: File };
+const CATEGORY_OPTIONS = CATEGORIES.map((value) => ({ value, label: categoryLabel(value) }));
+const BRAND_OPTIONS = BRANDS.map((value) => ({ value, label: brandLabel(value) }));
 
-/** A local id for a photo in this form, nothing to do with the Listing id.
- *
- *  crypto.randomUUID() exists only in a secure context, so it is there on
- *  localhost and on https but undefined when the phone opens the dev server
- *  over http on the local network. That is exactly how we test on a real
- *  phone, so fall back rather than throw. */
-function photoId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  return `photo-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
+type Props = {
+  photos: SellPhoto[];
+  coverId: string | null;
+  /** Owned by SellFlow, so a trip back to the photos does not wipe it. */
+  fields: FormFields;
+  onChange: (patch: Partial<FormFields>) => void;
+  prefilled: Prefilled;
+  /** Set when Call 1 failed. Shown once, quietly: the form still works. */
+  prefillError: string | null;
+  onBackToPhotos: () => void;
+};
 
-/** Turn a snake_case constant into something readable, for the category list. */
-function titleCase(value: string): string {
-  return value.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
-}
+export default function SellForm({
+  photos,
+  coverId,
+  fields,
+  onChange,
+  prefilled,
+  prefillError,
+  onBackToPhotos,
+}: Props) {
+  const {
+    title, category, brand, brandOther, colour, size,
+    condition, flawNote, isReplica, price, city, fitNote,
+  } = fields;
 
-const CATEGORY_OPTIONS = CATEGORIES.map((value) => ({ value, label: titleCase(value) }));
-
-export default function SellForm() {
-  const [photos, setPhotos] = useState<SellPhoto[]>([]);
-  const [coverId, setCoverId] = useState<string | null>(null);
-  const [preparing, setPreparing] = useState(false);
-
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState<Category | "">("");
-  const [size, setSize] = useState<Size | null>(null);
-  const [condition, setCondition] = useState<ConditionValue | null>(null);
-  const [isReplica, setIsReplica] = useState<boolean | null>(null);
-  const [price, setPrice] = useState("");
-  const [city, setCity] = useState<City | "">("");
-  const [fitNote, setFitNote] = useState("");
+  // A suggestion she has taken, or dismissed by typing, stops being offered.
+  const [takenChips, setTakenChips] = useState<Record<string, boolean>>({});
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
 
   // null means this category has no size at all: bags and dupattas.
   const sizeOptions = category ? SIZE_OPTIONS[category] : null;
-
-  // Object URLs are a browser-level allocation; without this they leak.
-  useEffect(() => {
-    return () => {
-      photos.forEach((photo) => URL.revokeObjectURL(photo.url));
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function handleAdd(files: File[]) {
-    setPreparing(true);
-    // Converts HEIC, resizes to 1600px and strips EXIF, so her home GPS
-    // location never leaves the phone. It never throws: on failure it keeps the
-    // original and sets `problem`.
-    const prepared = await preparePhotos(files);
-    const added: SellPhoto[] = prepared.map((item) => ({
-      id: photoId(),
-      url: URL.createObjectURL(item.file),
-      problem: item.problem,
-      file: item.file,
-    }));
-    setPhotos((current) => {
-      const next = [...current, ...added];
-      // The first photo added becomes the cover. She can change it after.
-      if (!coverId && next.length > 0) setCoverId(next[0].id);
-      return next;
-    });
-    setPreparing(false);
-  }
-
-  function handleRemove(id: string) {
-    setPhotos((current) => {
-      const photo = current.find((p) => p.id === id);
-      if (photo) URL.revokeObjectURL(photo.url);
-      const next = current.filter((p) => p.id !== id);
-      if (id === coverId) setCoverId(next[0]?.id ?? null);
-      return next;
-    });
-  }
+  const evidence = brandEvidenceLabel(prefilled.brandEvidence);
 
   function handleCategoryChange(next: Category | "") {
-    setCategory(next);
+    onChange({ category: next });
     // A size that does not exist in the new category would silently submit.
     const nextOptions = next ? SIZE_OPTIONS[next] : null;
-    if (!nextOptions || (size && !nextOptions.includes(size))) {
-      setSize(null);
-    }
+    if (!nextOptions || (size && !nextOptions.includes(size))) onChange({ size: null });
   }
 
   function validate(): Record<string, string> {
     const found: Record<string, string> = {};
-    if (photos.length < MIN_LISTING_PHOTOS) {
-      found.photos = `Add at least ${MIN_LISTING_PHOTOS} photos.`;
-    }
     if (!title.trim()) found.title = "Give it a short title.";
     if (!category) found.category = "Pick a category.";
+    if (!brand) found.brand = "Pick one, or choose Not sure / no label.";
+    if (brand === "other" && !brandOther.trim()) found.brandOther = "Which brand is it?";
     if (sizeOptions && !size) found.size = "Pick a size.";
     if (!condition) found.condition = "Pick a condition.";
     if (isReplica === null) found.isReplica = "Let buyers know either way.";
@@ -160,23 +116,24 @@ export default function SellForm() {
   return (
     <>
       <form className="sell-form" onSubmit={handleSubmit} noValidate>
-        <div data-error={Boolean(errors.photos)}>
-          <span className="sell-form-section-label">Photos</span>
-          <PhotoGrid
-            photos={photos}
-            coverId={coverId}
-            onAdd={handleAdd}
-            onRemove={handleRemove}
-            onSetCover={setCoverId}
-          />
-          {preparing && <p className="input-hint">Getting your photos ready...</p>}
-          {errors.photos && <p className="input-error-msg">{errors.photos}</p>}
-          <ul className="input-hint" style={{ marginTop: "var(--space-3)", paddingLeft: "var(--space-4)" }}>
-            {PHOTO_TIPS.map((tip) => (
-              <li key={tip}>{tip}</li>
-            ))}
-          </ul>
+        <div className="sell-form-photos">
+          {photos.map((photo) => (
+            <img key={photo.id} className="sell-form-thumb" src={photo.url} alt="" />
+          ))}
+          <TextLink onClick={onBackToPhotos} className="sell-form-photos-edit">
+            Edit photos
+          </TextLink>
         </div>
+
+        {prefillError && (
+          <p className="sell-form-notice">
+            {/* "nothing new" rather than "nothing": on a second attempt that
+                fails, what an earlier read filled in is still on the form, and
+                wiping it because a retry failed would be the wrong trade. */}
+            We could not read your photos this time, so there is nothing new filled in below.
+            Everything still works, it is just yours to type.
+          </p>
+        )}
 
         <div data-error={Boolean(errors.title)}>
           <Input
@@ -184,9 +141,10 @@ export default function SellForm() {
             placeholder="e.g. Khaadi lawn kurta"
             hint="Be specific about colour and print."
             value={title}
-            onChange={(event) => setTitle(event.target.value)}
+            onChange={(event) => onChange({ title: event.target.value })}
             error={errors.title}
           />
+          <AiMark mark={title === prefilled.title ? prefilled.titleMark : undefined} />
         </div>
 
         <div data-error={Boolean(errors.category)}>
@@ -198,6 +156,69 @@ export default function SellForm() {
             onChange={(event) => handleCategoryChange(event.target.value as Category | "")}
             error={errors.category}
           />
+          <AiMark mark={category === prefilled.category ? prefilled.categoryMark : undefined} />
+          {!category && prefilled.categorySuggestion && !takenChips.category && (
+            <CouldItBe
+              label={categoryLabel(prefilled.categorySuggestion)}
+              onPick={() => {
+                handleCategoryChange(prefilled.categorySuggestion!);
+                setTakenChips((current) => ({ ...current, category: true }));
+              }}
+            />
+          )}
+        </div>
+
+        <div data-error={Boolean(errors.brand)}>
+          <Select
+            label="Brand"
+            placeholder="Pick a brand"
+            options={BRAND_OPTIONS}
+            value={brand}
+            onChange={(event) => onChange({ brand: event.target.value as Brand | "" })}
+            // Nudging her towards "Not sure" is only useful while the field is
+            // empty. Once we have read a brand off a label, the hint, the
+            // marker and the evidence line would be three lines of support
+            // under one field, two of them answering a question she no longer
+            // has.
+            hint={brand ? undefined : "No label? Choose Not sure / no label. It is a normal answer."}
+            error={errors.brand}
+          />
+          <AiMark mark={brand === prefilled.brand ? prefilled.brandMark : undefined} />
+          {evidence && brand === prefilled.brand && prefilled.brandMark && (
+            <span className="ai-mark ai-mark-quiet">{evidence}</span>
+          )}
+          {!brand && prefilled.brandSuggestion && !takenChips.brand && (
+            <CouldItBe
+              label={brandLabel(prefilled.brandSuggestion)}
+              onPick={() => {
+                onChange({ brand: prefilled.brandSuggestion! });
+                setTakenChips((current) => ({ ...current, brand: true }));
+              }}
+            />
+          )}
+        </div>
+
+        {brand === "other" && (
+          <div data-error={Boolean(errors.brandOther)}>
+            <Input
+              label="Which brand?"
+              placeholder="As printed on the label"
+              value={brandOther}
+              onChange={(event) => onChange({ brandOther: event.target.value })}
+              error={errors.brandOther}
+            />
+          </div>
+        )}
+
+        <div>
+          <Input
+            label="Colour"
+            placeholder="e.g. navy blue"
+            hint="Plain everyday words. Buyers search with these."
+            value={colour}
+            onChange={(event) => onChange({ colour: event.target.value })}
+          />
+          <AiMark mark={colour === prefilled.colour ? prefilled.colourMark : undefined} />
         </div>
 
         {/* Bags and dupattas have no size, so the field is not shown at all. */}
@@ -209,7 +230,7 @@ export default function SellForm() {
                 <FilterChip
                   key={option}
                   active={size === option}
-                  onClick={() => setSize(size === option ? null : option)}
+                  onClick={() => onChange({ size: size === option ? null : option })}
                 >
                   {option}
                 </FilterChip>
@@ -221,13 +242,40 @@ export default function SellForm() {
 
         <div data-error={Boolean(errors.condition)}>
           <span className="sell-form-section-label">Condition</span>
-          <ConditionPicker value={condition} onChange={setCondition} />
+          <ConditionPicker value={condition} onChange={(value) => onChange({ condition: value })} />
+          <AiMark mark={condition === prefilled.condition ? prefilled.conditionMark : undefined} />
+          {!condition && prefilled.conditionSuggestion && !takenChips.condition && (
+            <CouldItBe
+              label={
+                CONDITIONS.find((item) => item.value === prefilled.conditionSuggestion)?.label ?? ""
+              }
+              onPick={() => {
+                onChange({ condition: prefilled.conditionSuggestion! });
+                setTakenChips((current) => ({ ...current, condition: true }));
+              }}
+            />
+          )}
           {errors.condition && <p className="input-error-msg">{errors.condition}</p>}
+        </div>
+
+        <div>
+          <Textarea
+            label={
+              <>
+                Anything to flag? <span className="sell-form-optional">(optional)</span>
+              </>
+            }
+            placeholder="Slight pilling under the arms"
+            hint="Marks, pulls, fading. Saying it first is what buyers trust."
+            value={flawNote}
+            onChange={(event) => onChange({ flawNote: event.target.value })}
+          />
+          <AiMark mark={flawNote === prefilled.flawNote ? prefilled.flawMark : undefined} />
         </div>
 
         <div data-error={Boolean(errors.isReplica)}>
           <span className="sell-form-section-label">Is it a replica?</span>
-          <ReplicaPicker value={isReplica} onChange={setIsReplica} />
+          <ReplicaPicker value={isReplica} onChange={(value) => onChange({ isReplica: value })} />
           {errors.isReplica && <p className="input-error-msg">{errors.isReplica}</p>}
         </div>
 
@@ -236,10 +284,10 @@ export default function SellForm() {
             label="Your asking price (Rs)"
             placeholder="3000"
             inputMode="numeric"
-            hint="Whole rupees. This is yours to set."
+            hint="Whole rupees. This one is yours. We do not guess."
             value={price}
             // Digits only. type="number" would let the scroll wheel change it.
-            onChange={(event) => setPrice(event.target.value.replace(/\D/g, ""))}
+            onChange={(event) => onChange({ price: event.target.value.replace(/\D/g, "") })}
             error={errors.price}
           />
         </div>
@@ -250,7 +298,7 @@ export default function SellForm() {
             placeholder="Pick a city"
             options={CITIES}
             value={city}
-            onChange={(event) => setCity(event.target.value as City | "")}
+            onChange={(event) => onChange({ city: event.target.value as City | "" })}
             hint="Buyers nearby can arrange same-day pickup."
             error={errors.city}
           />
@@ -265,7 +313,7 @@ export default function SellForm() {
           placeholder="Marked small but fits a medium"
           hint="Only if the fit is unusual."
           value={fitNote}
-          onChange={(event) => setFitNote(event.target.value)}
+          onChange={(event) => onChange({ fitNote: event.target.value })}
         />
 
         <PrimaryButton type="submit">Submit listing</PrimaryButton>
@@ -274,8 +322,8 @@ export default function SellForm() {
       <BottomSheet
         open={submitted}
         onClose={() => setSubmitted(false)}
-        heading="We're reviewing your listing."
-        body="We're just going to check a few details and we'll get back to you within 24 hours."
+        heading="All good so far!"
+        body="We'll review your listing and get back to you within a day."
         media={
           <div className="bottom-sheet-item">
             {cover ? (

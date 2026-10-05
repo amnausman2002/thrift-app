@@ -90,6 +90,7 @@ The core entity. Status drives everything the buyer, the seller and the admin se
 | brand | enum | Fixed list of \~30, plus other |
 | brand\_other | string | Only when brand is other |
 | category | enum | kurta, pret, co\_ord\_set, dupatta, dress, top, bottoms, jeans, skirt, jacket, sportswear, shoes, bag |
+| colour | string | Plain everyday words. Filled by photo-to-listing, editable, and used by search. No fixed list yet |
 | size | string | Clothes: XS–XL. Shoes: UK 3–9. **Bags and dupattas: null** (no size field shown) |
 | measurements | string | Optional free text, inches |
 | fit\_note | text | Optional, all categories. "Marked small but fits a medium", "runs narrow". Prompted with an example on the form |
@@ -288,7 +289,12 @@ Decisions taken during the build that differ from the spec above, or that resolv
 | 2 Oct 2026 | **No Tailwind.** Plain global CSS in `app/globals.css` | The design system already existed as vanilla CSS with custom properties. Converting it would have added a package and a chance to drift | Agreed, built |
 | 2 Oct 2026 | **`FilterChip` is a `<button>`**, not a `<div>` as in `components.html` | A div cannot be tabbed to, activated by keyboard, or announced as a control. Visually identical | Built. Flagged to Bismah |
 | 2 Oct 2026 | **`BottomSheet` is `position: fixed` in a portal**, not `absolute` | In `components.html` it sits inside a `.phone-frame` mock that only exists on that static page | Built. Flagged to Bismah |
-| 2 Oct 2026 | **Colour list still does not exist** | Call 1 already returns a `colour` and `Listing.colour` is specified above, so nothing can validate it | **Open.** Real gap, not a nicety |
+| 2 Oct 2026 | **Colour list still does not exist** | Call 1 already returns a `colour` and `Listing.colour` is specified above, so nothing can validate it | **Open.** Real gap, not a nicety. The field is a free-text box on the sell form in the meantime |
+| 5 Oct 2026 | **`colour` added to the Listing table above** | It was named in the flow description and in the row above, but missing from the field list. Documentation gap, not a new field | Corrected |
+| 5 Oct 2026 | **The sell flow is photo-first**, modelled on eBay: guide, photos, AI read, then the form | She never opens a blank form. The form arrives part filled, with every AI answer marked | Built, branch `seller` |
+| 5 Oct 2026 | **No viewfinder of our own.** `capture="environment"` hands her to the phone's camera app | Rebuilding focus, exposure and a shutter is work we do not need, and a half-finished viewfinder encourages fewer photos | Built |
+| 5 Oct 2026 | **The photo guide shows once**, then lives behind "How to photograph it" | Remembered in `localStorage`, not on the User record: it is a convenience, and a new phone showing it again is the right outcome | Built |
+| 5 Oct 2026 | **`title_suggestion`, `colour` and `flaws_seen` carry no confidence** | `listingDraftSchema` has no `colour_confidence` or `title_confidence`, so those three are marked "AI suggested" without a confidence claim rather than being given one we invented | **Open.** Adding the two fields to the schema is a small change |
 
 ## **Read-it-back check**
 

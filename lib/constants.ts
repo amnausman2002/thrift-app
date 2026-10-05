@@ -50,9 +50,36 @@ export type Brand = (typeof BRANDS)[number];
 // "unknown" means the seller (or the AI) cannot tell the brand — tags are
 // often cut out, so this is a normal choice, never an error. "other" means a
 // real brand that isn't on the list, paired with a free-text brand_other value.
+//
+// Only the values a plain snake_case-to-Title-Case conversion gets wrong need
+// an entry here. Everything else ("khaadi" to "Khaadi") is derived.
 export const BRAND_LABELS: Partial<Record<Brand, string>> = {
   unknown: "Not sure / no label",
+  hm: "H&M",
+  levis: "Levi's",
+  maria_b: "Maria B.",
+  ideas_by_gul_ahmed: "Ideas by Gul Ahmed",
+  marks_and_spencer: "Marks & Spencer",
+  pull_and_bear: "Pull & Bear",
+  forever_21: "Forever 21",
 };
+
+/** Display label for a brand: the override above, or Title Case of the value. */
+export function brandLabel(brand: Brand): string {
+  return BRAND_LABELS[brand] ?? titleCaseValue(brand);
+}
+
+/** Display label for a category. Categories have no overrides so far. */
+export function categoryLabel(category: Category): string {
+  return titleCaseValue(category);
+}
+
+function titleCaseValue(value: string): string {
+  return value
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
 
 export const CATEGORIES = [
   "kurta",
@@ -200,4 +227,43 @@ export const PHOTO_TIPS = [
   "The whole item in frame",
   "A close-up of any flaw",
   "If there is a label or tag, take a close-up of it.",
+] as const;
+
+// The same five tips, with a line of why and a picture, for the guide a seller
+// sees on her first listing and can reopen any time after that. PHOTO_TIPS
+// above stays the short form, used where there is no room for this.
+//
+// `illustration` names a drawing in components/seller/GuideIllustration.tsx.
+export type PhotoGuideStep = {
+  illustration: "daylight" | "background" | "whole_item" | "flaw" | "label";
+  title: string;
+  body: string;
+};
+
+export const PHOTO_GUIDE: readonly PhotoGuideStep[] = [
+  {
+    illustration: "daylight",
+    title: "Find some daylight",
+    body: "Next to a window in the daytime beats any lamp. Yellow light changes the colour.",
+  },
+  {
+    illustration: "background",
+    title: "Keep the background plain",
+    body: "A door, a wall, a plain floor. A printed bedsheet competes with the clothes.",
+  },
+  {
+    illustration: "whole_item",
+    title: "Fit the whole thing in",
+    body: "Shoulder to hem, nothing cut off. Buyers want to see the shape.",
+  },
+  {
+    illustration: "flaw",
+    title: "Show any flaw up close",
+    body: "A pull, a mark, a faded patch. Saying it first is what makes buyers trust you.",
+  },
+  {
+    illustration: "label",
+    title: "Photograph the label",
+    body: "If there is a label or tag, take a close-up. It is the only way we can fill in the brand.",
+  },
 ] as const;

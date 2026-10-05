@@ -672,3 +672,256 @@ img { max-width: 100%; display: block; }
   color: var(--text-tertiary);
   font-weight: 400;
 }
+
+/* ═══════════════════════════════════════════════════════════
+ * Seller flow. NEW: components.html has no design for any of
+ * this, so each block says what existing pattern it is built
+ * from. Flagged for Bismah.
+ * ═══════════════════════════════════════════════════════════ */
+
+/* ── Page and step scaffold ──────────────────────────────── */
+/* One column, phone width, with the actions pinned to the bottom of the step
+ * rather than floating after however much content there happens to be. */
+.sell-page {
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-8);
+}
+.sell-step {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.sell-heading { margin-bottom: 0; }
+.sell-sub {
+  font-size: var(--size-body-sm);
+  line-height: var(--lh-body-sm);
+  color: var(--text-secondary);
+  margin-top: calc(var(--space-2) * -1);
+}
+/* Pushed to the bottom of the step, so Take photos sits in the same place
+ * whether the guide is on screen or not. */
+.sell-footer {
+  margin-top: auto;
+  padding-top: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.sell-guide-link { display: flex; justify-content: flex-start; }
+.sell-guide-link .btn-text-link { width: auto; }
+
+/* ── Photo source buttons ────────────────────────────────── */
+/* Camera on top, gallery under it. Same stacking rule as the bottom sheet:
+ * two full-width actions, never side by side. */
+.photo-source {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ── Photo guide ─────────────────────────────────────────── */
+/* Built from the .condition-option row: a marker on the left, a label and a
+ * description stacked on the right. Not interactive, so it is a plain list
+ * rather than that control, and the marker is a picture instead of a radio. */
+.photo-guide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.photo-guide-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.photo-guide-figure-box {
+  width: 72px;
+  height: 54px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* The drawings are strokes in currentColor, so the tone is set here. */
+  color: var(--text-secondary);
+}
+.guide-figure { width: 100%; height: 100%; }
+.photo-guide-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.photo-guide-title {
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: var(--size-ui);
+  color: var(--text-primary);
+}
+.photo-guide-body {
+  font-size: var(--size-meta);
+  line-height: var(--lh-body-sm);
+  color: var(--text-secondary);
+}
+/* Inside the sheet the rows sit above the Got it button, which supplies its
+ * own spacing, so the list only needs a gap below itself. */
+.bottom-sheet .photo-guide { margin-bottom: var(--space-5); }
+
+/* ── Reading screen ──────────────────────────────────────── */
+.reading-step { justify-content: center; text-align: center; }
+.reading-middle {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+.reading-thumb {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+}
+.reading-heading { margin: 0; }
+.reading-sub {
+  font-size: var(--size-body-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-5);
+}
+.reading-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  width: 100%;
+  max-width: 300px;
+}
+.reading-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-ui);
+  font-size: var(--size-body-sm);
+  color: var(--text-tertiary);
+}
+.reading-row.is-done { color: var(--text-primary); }
+/* Borrowed from .condition-radio so a step in progress and an unchosen option
+ * read as the same kind of marker. */
+.reading-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  flex-shrink: 0;
+  position: relative;
+}
+.reading-row.is-done .reading-dot {
+  border-color: var(--status-live);
+  background: var(--status-live);
+}
+.reading-row.is-done .reading-dot::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--white);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+/* The one piece of motion in the flow: the step being worked on. Suppressed
+ * entirely at rest, per design-system.md, rather than run at 0.01ms. */
+@media (prefers-reduced-motion: no-preference) {
+  .reading-row:not(.is-done) .reading-dot {
+    animation: reading-pulse 1.4s var(--ease) infinite;
+  }
+}
+@keyframes reading-pulse {
+  0%, 100% { border-color: var(--border); }
+  50%      { border-color: var(--text-secondary); }
+}
+
+/* ── AI suggestion markers ───────────────────────────────── */
+/* Text only. design-system.md rules out an accent colour, and --status-pending
+ * is the one warm token we already own, so a suggestion is marked by wording
+ * and weight rather than by a badge or an icon. */
+.ai-mark {
+  display: block;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: var(--size-micro);
+  color: var(--status-pending);
+  margin-top: var(--space-1);
+}
+/* The evidence line under the brand field: supporting detail, not a second
+ * claim, so it drops back to the hint colour. */
+.ai-mark-quiet {
+  color: var(--text-tertiary);
+  font-weight: 400;
+}
+.ai-could-be {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.ai-could-be-label {
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: var(--size-caption);
+  color: var(--text-secondary);
+}
+
+/* ── Photos carried into the form step ───────────────────── */
+.sell-form-photos {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.sell-form-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+.sell-form-photos-edit { width: auto; margin-left: auto; }
+/* Said once, quietly, when the AI read failed. Not an error: nothing is
+ * broken, there is simply nothing filled in. */
+.sell-form-notice {
+  font-size: var(--size-meta);
+  line-height: var(--lh-body-sm);
+  color: var(--text-secondary);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+}
+
+/* ── Photo quality sheet ─────────────────────────────────── */
+/* The advisory sheet can name more than one photo, so it shows the flagged
+ * ones side by side instead of .advisory-preview's single 4:3 frame. */
+.quality-thumbs {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+.quality-thumb {
+  position: relative;
+  flex: 1 1 0;
+  max-width: 120px;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface);
+}
+.quality-thumb img { width: 100%; height: 100%; object-fit: cover; }
