@@ -22,6 +22,7 @@ const inter = Inter({
 
 export const metadata = {
   title: "Reloved",
+  description: "Preloved women's clothing from Pakistani brands. Curated, not chaotic.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
