@@ -324,6 +324,7 @@ img { max-width: 100%; display: block; }
   overflow-x: auto;
   padding-bottom: var(--space-1);
   scrollbar-width: none;
+  touch-action: pan-x;
 }
 .chip-row::-webkit-scrollbar { display: none; }
 .filter-chip {
@@ -733,6 +734,7 @@ img { max-width: 100%; display: block; }
   flex-direction: column;
   height: 100%;
   overflow-y: auto;
+  touch-action: pan-y;
 }
 .menu-header {
   display: flex;
@@ -881,6 +883,7 @@ img { max-width: 100%; display: block; }
 .filter-page-body {
   flex: 1;
   overflow-y: auto;
+  touch-action: pan-y;
   padding: 0 var(--space-4);
 }
 .filter-page-option {

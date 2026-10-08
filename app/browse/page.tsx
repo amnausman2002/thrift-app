@@ -700,6 +700,7 @@ export default function BrowsePage() {
           searchable
         />
       )}
+
     </>
   );
 }

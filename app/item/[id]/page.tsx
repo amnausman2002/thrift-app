@@ -418,7 +418,7 @@ function formatBrandName(brand: Brand, brandOther?: string): string | null {
 }
 
 function formatPrice(price: number): string {
-  return `Rs ${price.toLocaleString("en-PK")}`;
+  return `Rs ${price.toLocaleString("en")}`;
 }
 
 function cityLabel(city: City): string {
