@@ -93,7 +93,7 @@ The core entity. Status drives everything the buyer, the seller and the admin se
 | colour | string | Plain everyday words. Filled by photo-to-listing and used by search. **Not shown on the sell form** as of 8 Oct, so it is captured but not editable by the seller. No fixed list yet |
 | size | string | Clothes: XS–XL. Shoes: UK 3–9. **Bags and dupattas: null** (no size field shown) |
 | measurements | string | Optional free text, inches |
-| material | enum | **Not agreed yet.** 19 fabrics in `MATERIALS`, lawn and khaddar first, plus `other`. Replaced fit\_note on the sell form on 8 Oct. Needs Bismah's agreement before buyers filter on it |
+| material | enum | **Not agreed yet.** 20 fabrics in `MATERIALS`, lawn and khaddar first, plus `other`. Replaced fit\_note on the sell form on 8 Oct. Needs Bismah's agreement before buyers filter on it |
 | fit\_note | text | Optional, all categories. **No longer on the sell form** as of 8 Oct, replaced by material. Still specified here: decide whether to delete it or keep it for later |
 | condition | enum | brand\_new\_with\_tags, brand\_new\_without\_tags, very\_good, fair — each shown with its description |
 | is\_replica | boolean | Required declaration, not inferred |

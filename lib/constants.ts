@@ -243,6 +243,7 @@ export const MATERIALS = [
   { value: "net", label: "Net" },
   { value: "jacquard", label: "Jacquard" },
   { value: "viscose", label: "Viscose" },
+  { value: "polyester", label: "Polyester" },
   { value: "denim", label: "Denim" },
   { value: "jersey", label: "Jersey" },
   { value: "wool", label: "Wool" },
