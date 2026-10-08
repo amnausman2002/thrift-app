@@ -286,8 +286,7 @@ function ChevronDown() {
 
 function summarize(selected: string[], labels: Map<string, string>): string {
   if (selected.length === 0) return "All";
-  if (selected.length === 1) return labels.get(selected[0]) ?? selected[0];
-  return `${selected.length} selected`;
+  return selected.map((v) => labels.get(v) ?? v).join(", ");
 }
 
 export default function BrowsePage() {
@@ -431,6 +430,7 @@ export default function BrowsePage() {
           paddingBottom: "var(--space-8)",
         }}
       >
+
         <div className="browse-header">
           <h1 className="browse-heading">
             {selectedCategories.length === 1
@@ -447,6 +447,7 @@ export default function BrowsePage() {
                 className="clear-filters-btn"
                 onClick={clearFilters}
               >
+                Clear filters
                 <svg
                   width="14"
                   height="14"
@@ -462,7 +463,6 @@ export default function BrowsePage() {
                     strokeLinecap="round"
                   />
                 </svg>
-                Clear
               </button>
             )}
           </div>
@@ -594,6 +594,19 @@ export default function BrowsePage() {
           </div>
         )}
       </main>
+
+      <footer className="browse-footer">
+        <div className="browse-footer-inner">
+          <nav aria-label="Footer" className="browse-footer-links">
+            <a href="#" className="browse-footer-link">How it works</a>
+            <span className="browse-footer-dot" aria-hidden="true">·</span>
+            <a href="#" className="browse-footer-link">Instagram</a>
+            <span className="browse-footer-dot" aria-hidden="true">·</span>
+            <a href="#" className="browse-footer-link">Contact</a>
+          </nav>
+          <p className="browse-footer-copyright">© Reloved 2026</p>
+        </div>
+      </footer>
 
       {panelOpen && (
         <FilterPanel

@@ -456,8 +456,8 @@ function WhatsAppIcon() {
 
 function BackArrowIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-      <path d="M15 9H3M3 9l5-5M3 9l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="24" height="14" viewBox="0 0 24 14" fill="none" aria-hidden="true">
+      <path d="M23 7H1M1 7l5.5-6M1 7l5.5 6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -511,6 +511,7 @@ export default function ItemDetailPage() {
   const [descExpanded, setDescExpanded] = useState(false);
   const [overflowOpen, setOverflowOpen] = useState(false);
   const overflowRef = useRef<HTMLDivElement>(null);
+  const touchXRef = useRef<number | null>(null);
 
   const listing = MOCK_LISTINGS.find((l) => l.id === id);
 
@@ -521,8 +522,8 @@ export default function ItemDetailPage() {
         setOverflowOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    document.addEventListener("pointerdown", handleClick);
+    return () => document.removeEventListener("pointerdown", handleClick);
   }, [overflowOpen]);
 
   const handleShare = useCallback(async () => {
@@ -559,13 +560,12 @@ export default function ItemDetailPage() {
   const whatsappUrl = `https://wa.me/923001234567?text=${whatsappMessage}`;
 
   function handleSwipeStart(e: React.TouchEvent) {
-    const el = e.currentTarget as HTMLElement & { _touchX?: number };
-    el._touchX = e.touches[0].clientX;
+    touchXRef.current = e.touches[0].clientX;
   }
   function handleSwipeEnd(e: React.TouchEvent) {
-    const el = e.currentTarget as HTMLElement & { _touchX?: number };
-    if (el._touchX === undefined) return;
-    const diff = e.changedTouches[0].clientX - el._touchX;
+    if (touchXRef.current === null) return;
+    const diff = e.changedTouches[0].clientX - touchXRef.current;
+    touchXRef.current = null;
     if (Math.abs(diff) > 40) {
       if (diff < 0 && photoIndex < photos.length - 1) {
         setPhotoIndex(photoIndex + 1);
@@ -573,7 +573,6 @@ export default function ItemDetailPage() {
         setPhotoIndex(photoIndex - 1);
       }
     }
-    el._touchX = undefined;
   }
 
   return (

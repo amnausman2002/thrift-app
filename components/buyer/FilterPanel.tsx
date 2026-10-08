@@ -72,7 +72,7 @@ export default function FilterPanel({
           >
             <span className="filter-panel-row-label">{row.label}</span>
             <span className="filter-panel-row-value">
-              {row.valueLabel}
+              <span className="filter-panel-row-value-text">{row.valueLabel}</span>
               <ChevronIcon />
             </span>
           </button>
