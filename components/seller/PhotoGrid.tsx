@@ -1,22 +1,27 @@
 "use client";
 
-import { useRef, useState } from "react";
-import PhotoSlot from "./PhotoSlot";
-import type { GridPhoto } from "./PhotoSlot";
-import { MIN_LISTING_PHOTOS, MAX_LISTING_PHOTOS } from "@/lib/constants";
-
 // .photo-grid from components.html section 10. This is both the uploader and
 // the cover picker: the showcase draws them as two states of one grid, so they
 // are one component rather than two.
 //
 // Rules, from the PRD:
 // - Two to six photos, enforced at submit. This grid never blocks her.
-// - Exactly one cover. The first photo added becomes it, and she can change it.
-// - Tap a photo to select it, then "Set as cover". Tapping is not destructive.
+// - Exactly one cover. The first photo added becomes it, and choosing another
+//   moves that photo to the front, so the grid is the buyer's running order.
+//
+// CHANGED FROM components.html, agreed on screen with Amna: all six cells are
+// always drawn, and every empty one carries a plus and opens the picker. The
+// showcase shows one live "Add" cell followed by dimmed placeholders, which
+// hides the ceiling until she reaches it. There is no hint line underneath.
 //
 // The file picker uses accept="image/*" and NEVER lists image/heic. Safari 17+
 // reacts to an explicit heic type by converting JPEGs *into* HEIC, which is the
 // problem lib/photos.ts exists to solve.
+
+import { useRef, useState } from "react";
+import PhotoSlot from "./PhotoSlot";
+import type { GridPhoto } from "./PhotoSlot";
+import { MAX_LISTING_PHOTOS } from "@/lib/constants";
 
 type Props = {
   photos: GridPhoto[];
@@ -27,11 +32,15 @@ type Props = {
   onSetCover: (id: string) => void;
 };
 
-export default function PhotoGrid({ photos, coverId, onAdd, onRemove, onSetCover }: Props) {
+export default function PhotoGrid({
+  photos,
+  coverId,
+  onAdd,
+  onRemove,
+  onSetCover,
+}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  const isFull = photos.length >= MAX_LISTING_PHOTOS;
 
   function handleFiles(fileList: FileList | null) {
     if (!fileList) return;
@@ -42,12 +51,10 @@ export default function PhotoGrid({ photos, coverId, onAdd, onRemove, onSetCover
     if (inputRef.current) inputRef.current.value = "";
   }
 
-  // One slot per photo, then the Add slot, then dimmed placeholders out to six
-  // so the grid keeps its shape instead of reflowing on every upload.
-  const placeholderCount = Math.max(0, MAX_LISTING_PHOTOS - photos.length - (isFull ? 0 : 1));
+  const emptyCount = MAX_LISTING_PHOTOS - photos.length;
 
   return (
-    <div>
+    <div className="photo-grid-wrap">
       <div className="photo-grid">
         {photos.map((photo, index) => (
           <PhotoSlot
@@ -68,35 +75,29 @@ export default function PhotoGrid({ photos, coverId, onAdd, onRemove, onSetCover
           />
         ))}
 
-        {!isFull && (
+        {Array.from({ length: emptyCount }).map((_, i) => (
           <button
+            key={`empty-${i}`}
             type="button"
-            className="photo-slot"
+            className="photo-slot is-empty"
             onClick={() => inputRef.current?.click()}
-            aria-label="Add photos"
+            aria-label={`Add photo ${photos.length + i + 1}`}
           >
-            <span className="photo-slot-add">
-              <svg
-                className="photo-slot-add-icon"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="16" />
-                <line x1="8" y1="12" x2="16" y2="12" />
-              </svg>
-              <span className="photo-slot-add-text">Add</span>
-            </span>
+            <svg
+              className="photo-slot-add-icon"
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M12 5v14" />
+              <path d="M5 12h14" />
+            </svg>
           </button>
-        )}
-
-        {Array.from({ length: placeholderCount }).map((_, i) => (
-          <div key={`placeholder-${i}`} className="photo-slot is-placeholder" aria-hidden="true" />
         ))}
       </div>
 
@@ -109,14 +110,6 @@ export default function PhotoGrid({ photos, coverId, onAdd, onRemove, onSetCover
         onChange={(event) => handleFiles(event.target.files)}
         tabIndex={-1}
       />
-
-      <p className="photo-grid-hint">
-        {photos.length === 0
-          ? `${MIN_LISTING_PHOTOS} to ${MAX_LISTING_PHOTOS} photos. Daylight, plain background, the whole item in frame.`
-          : isFull
-            ? "That's the maximum. Tap any photo to make it the cover."
-            : "Tap any photo to make it the cover."}
-      </p>
     </div>
   );
 }

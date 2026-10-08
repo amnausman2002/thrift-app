@@ -5,9 +5,14 @@
 // through the form:
 //
 //   high confidence   fill the field, marked "AI suggested"
-//   medium confidence fill the field, marked "AI suggested, please check"
+//   medium confidence fill the field, marked "AI suggested"
 //   low confidence    leave it EMPTY and offer a "Could it be...?" chip
 //   "unknown"         leave it empty, whatever the confidence said
+//
+// DEVIATION: CLAUDE.md says medium confidence should read "please check". That
+// wording was dropped from the screen, so high and medium now look identical
+// to her. The two are still distinct in the data, so bringing it back is a
+// change to markLabel alone.
 //
 // Suggestions only ever land in an empty field. Nothing here can overwrite
 // something she typed, because all of it runs once, before she sees the form.
@@ -40,8 +45,6 @@ export type Prefilled = {
   conditionMark?: FieldMark;
   conditionSuggestion?: ConditionValue;
 
-  flawNote: string;
-  flawMark?: FieldMark;
 };
 
 export const EMPTY_PREFILL: Prefilled = {
@@ -50,7 +53,6 @@ export const EMPTY_PREFILL: Prefilled = {
   brand: "",
   colour: "",
   condition: null,
-  flawNote: "",
 };
 
 function markFor(confidence: "high" | "medium" | "low"): FieldMark | undefined {
@@ -67,10 +69,15 @@ function fills(confidence: "high" | "medium" | "low"): boolean {
 export function prefillToForm(draft: ListingDraft): Prefilled {
   const result: Prefilled = { ...EMPTY_PREFILL };
 
-  // Title, colour and the flaw note carry no confidence of their own: the
-  // schema has no colour_confidence or title_confidence. So they are marked
-  // plainly as suggestions rather than being given a confidence we invented.
-  // Adding those two fields to listingDraftSchema is a sensible follow-up.
+  // Title and colour carry no confidence of their own: the schema has no
+  // colour_confidence or title_confidence. So they are marked plainly as
+  // suggestions rather than being given a confidence we invented. Adding those
+  // two fields to listingDraftSchema is a sensible follow-up.
+  //
+  // The description is deliberately NOT prefilled. Putting flaws_seen in it
+  // hides the placeholder, which is the only thing telling her what sort of
+  // sentence belongs there. The model's flaws_seen is still in its answer for
+  // the admin copilot to use later; it just never reaches the form.
   if (draft.title_suggestion?.trim()) {
     result.title = draft.title_suggestion.trim();
     result.titleMark = "suggested";
@@ -78,10 +85,6 @@ export function prefillToForm(draft: ListingDraft): Prefilled {
   if (draft.colour.trim() && draft.colour.trim().toLowerCase() !== "unknown") {
     result.colour = draft.colour.trim();
     result.colourMark = "suggested";
-  }
-  if (draft.flaws_seen.trim() && draft.flaws_seen.trim().toLowerCase() !== "none") {
-    result.flawNote = draft.flaws_seen.trim();
-    result.flawMark = "suggested";
   }
 
   if (draft.category !== "unknown") {
@@ -119,10 +122,12 @@ export function prefillToForm(draft: ListingDraft): Prefilled {
   return result;
 }
 
-/** The line under a filled field. Never says the model was certain, because it
- *  was not: it says we suggested it. */
-export function markLabel(mark: FieldMark): string {
-  return mark === "check" ? "AI suggested, please check" : "AI suggested";
+/** What a filled field is labelled. One wording for both confidences: the
+ *  medium-confidence "please check" was dropped from the UI, so high and
+ *  medium now read the same on screen even though they are still distinct in
+ *  the data. See FieldMark above if the distinction needs to come back. */
+export function markLabel(_mark: FieldMark): string {
+  return "AI suggested";
 }
 
 /** Shown under the brand field so she can see what we went on. */

@@ -11,25 +11,26 @@ import ChipRow from "@/components/ui/ChipRow";
 import BottomSheet from "@/components/ui/BottomSheet";
 import ConditionPicker from "@/components/seller/ConditionPicker";
 import ReplicaPicker from "@/components/seller/ReplicaPicker";
-import { AiMark, CouldItBe } from "./AiHints";
-import { brandEvidenceLabel, type Prefilled } from "./prefillToForm";
+import { CouldItBe, labelWithMark } from "./AiHints";
+import type { Prefilled } from "./prefillToForm";
 import type { FormFields, SellPhoto } from "./types";
 import {
   BRANDS,
   CATEGORIES,
   CITIES,
   CONDITIONS,
+  MATERIALS,
   SIZE_OPTIONS,
   brandLabel,
   categoryLabel,
 } from "@/lib/constants";
-import type { Brand, Category, City, ConditionValue, Size } from "@/lib/constants";
+import type { Brand, Category, City, Material, Size } from "@/lib/constants";
 
 // Everything that is not a photo. Photos and the AI read happen on the two
 // steps before this one, so by the time she gets here the form is already part
 // filled and her job is to correct it rather than compose it.
 //
-// Fields marked with AiMark were filled by Call 1. Fields with a "Could it
+// Fields whose label carries an "AI suggested" marker were filled by Call 1. Fields with a "Could it
 // be...?" chip were left empty on purpose, because confidence was low.
 //
 // There is no suggested price and no price range. She types her own.
@@ -59,9 +60,12 @@ export default function SellForm({
   onBackToPhotos,
 }: Props) {
   const {
-    title, category, brand, brandOther, colour, size,
-    condition, flawNote, isReplica, price, city, fitNote,
+    title, category, brand, brandOther, size,
+    condition, description, isReplica, price, city, material,
   } = fields;
+  // `colour` is deliberately not destructured: it is filled by the AI, carried
+  // in FormFields and saved, but never shown. She has no field to correct, so
+  // nothing here should read it.
 
   // A suggestion she has taken, or dismissed by typing, stops being offered.
   const [takenChips, setTakenChips] = useState<Record<string, boolean>>({});
@@ -71,7 +75,6 @@ export default function SellForm({
 
   // null means this category has no size at all: bags and dupattas.
   const sizeOptions = category ? SIZE_OPTIONS[category] : null;
-  const evidence = brandEvidenceLabel(prefilled.brandEvidence);
 
   function handleCategoryChange(next: Category | "") {
     onChange({ category: next });
@@ -116,13 +119,35 @@ export default function SellForm({
   return (
     <>
       <form className="sell-form" onSubmit={handleSubmit} noValidate>
-        <div className="sell-form-photos">
+        <div>
+          <span className="sell-form-section-label">Your photos</span>
+          <div className="sell-form-photos">
           {photos.map((photo) => (
             <img key={photo.id} className="sell-form-thumb" src={photo.url} alt="" />
           ))}
-          <TextLink onClick={onBackToPhotos} className="sell-form-photos-edit">
-            Edit photos
-          </TextLink>
+          {/* Takes her back to the photos step, which is where adding, removing
+              and choosing the cover already live. */}
+          <button
+            type="button"
+            className="sell-form-thumb-add"
+            onClick={onBackToPhotos}
+            aria-label="Add or change photos"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M12 5v14" />
+              <path d="M5 12h14" />
+            </svg>
+          </button>
+          </div>
         </div>
 
         {prefillError && (
@@ -137,26 +162,35 @@ export default function SellForm({
 
         <div data-error={Boolean(errors.title)}>
           <Input
-            label="Title"
+            label={labelWithMark("Title", title === prefilled.title ? prefilled.titleMark : undefined)}
             placeholder="e.g. Khaadi lawn kurta"
-            hint="Be specific about colour and print."
             value={title}
             onChange={(event) => onChange({ title: event.target.value })}
             error={errors.title}
           />
-          <AiMark mark={title === prefilled.title ? prefilled.titleMark : undefined} />
+        </div>
+
+        <div>
+          <Textarea
+            label="Description"
+            placeholder="e.g. worn 3–4 times, fits true to size. small mark near the sleeve."
+            value={description}
+            onChange={(event) => onChange({ description: event.target.value })}
+          />
         </div>
 
         <div data-error={Boolean(errors.category)}>
           <Select
-            label="What is it?"
+            label={labelWithMark(
+              "What is it?",
+              category === prefilled.category ? prefilled.categoryMark : undefined,
+            )}
             placeholder="Pick a category"
             options={CATEGORY_OPTIONS}
             value={category}
             onChange={(event) => handleCategoryChange(event.target.value as Category | "")}
             error={errors.category}
           />
-          <AiMark mark={category === prefilled.category ? prefilled.categoryMark : undefined} />
           {!category && prefilled.categorySuggestion && !takenChips.category && (
             <CouldItBe
               label={categoryLabel(prefilled.categorySuggestion)}
@@ -170,23 +204,13 @@ export default function SellForm({
 
         <div data-error={Boolean(errors.brand)}>
           <Select
-            label="Brand"
+            label={labelWithMark("Brand", brand === prefilled.brand ? prefilled.brandMark : undefined)}
             placeholder="Pick a brand"
             options={BRAND_OPTIONS}
             value={brand}
             onChange={(event) => onChange({ brand: event.target.value as Brand | "" })}
-            // Nudging her towards "Not sure" is only useful while the field is
-            // empty. Once we have read a brand off a label, the hint, the
-            // marker and the evidence line would be three lines of support
-            // under one field, two of them answering a question she no longer
-            // has.
-            hint={brand ? undefined : "No label? Choose Not sure / no label. It is a normal answer."}
             error={errors.brand}
           />
-          <AiMark mark={brand === prefilled.brand ? prefilled.brandMark : undefined} />
-          {evidence && brand === prefilled.brand && prefilled.brandMark && (
-            <span className="ai-mark ai-mark-quiet">{evidence}</span>
-          )}
           {!brand && prefilled.brandSuggestion && !takenChips.brand && (
             <CouldItBe
               label={brandLabel(prefilled.brandSuggestion)}
@@ -210,16 +234,6 @@ export default function SellForm({
           </div>
         )}
 
-        <div>
-          <Input
-            label="Colour"
-            placeholder="e.g. navy blue"
-            hint="Plain everyday words. Buyers search with these."
-            value={colour}
-            onChange={(event) => onChange({ colour: event.target.value })}
-          />
-          <AiMark mark={colour === prefilled.colour ? prefilled.colourMark : undefined} />
-        </div>
 
         {/* Bags and dupattas have no size, so the field is not shown at all. */}
         {sizeOptions && (
@@ -241,9 +255,12 @@ export default function SellForm({
         )}
 
         <div data-error={Boolean(errors.condition)}>
-          <span className="sell-form-section-label">Condition</span>
+          {labelWithMark(
+            "Condition",
+            condition === prefilled.condition ? prefilled.conditionMark : undefined,
+            "sell-form-section-label",
+          )}
           <ConditionPicker value={condition} onChange={(value) => onChange({ condition: value })} />
-          <AiMark mark={condition === prefilled.condition ? prefilled.conditionMark : undefined} />
           {!condition && prefilled.conditionSuggestion && !takenChips.condition && (
             <CouldItBe
               label={
@@ -258,38 +275,40 @@ export default function SellForm({
           {errors.condition && <p className="input-error-msg">{errors.condition}</p>}
         </div>
 
-        <div>
-          <Textarea
-            label={
-              <>
-                Anything to flag? <span className="sell-form-optional">(optional)</span>
-              </>
-            }
-            placeholder="Slight pilling under the arms"
-            hint="Marks, pulls, fading. Saying it first is what buyers trust."
-            value={flawNote}
-            onChange={(event) => onChange({ flawNote: event.target.value })}
-          />
-          <AiMark mark={flawNote === prefilled.flawNote ? prefilled.flawMark : undefined} />
-        </div>
-
         <div data-error={Boolean(errors.isReplica)}>
           <span className="sell-form-section-label">Is it a replica?</span>
           <ReplicaPicker value={isReplica} onChange={(value) => onChange({ isReplica: value })} />
           {errors.isReplica && <p className="input-error-msg">{errors.isReplica}</p>}
         </div>
 
+        {/* Written out rather than using <Input>, because the currency sits
+            inside the field and that component has no slot for a prefix. Same
+            classes, so it still looks and behaves like every other field. */}
         <div data-error={Boolean(errors.price)}>
-          <Input
-            label="Your asking price (Rs)"
-            placeholder="3000"
-            inputMode="numeric"
-            hint="Whole rupees. This one is yours. We do not guess."
-            value={price}
-            // Digits only. type="number" would let the scroll wheel change it.
-            onChange={(event) => onChange({ price: event.target.value.replace(/\D/g, "") })}
-            error={errors.price}
-          />
+          <label className="input-label" htmlFor="asking-price">
+            Your asking price
+          </label>
+          <div className="input-with-prefix">
+            <span className="input-prefix" aria-hidden="true">
+              Rs.
+            </span>
+            <input
+              id="asking-price"
+              className={errors.price ? "input input-error" : "input"}
+              placeholder="3000"
+              inputMode="numeric"
+              value={price}
+              aria-describedby={errors.price ? "asking-price-error" : undefined}
+              aria-invalid={errors.price ? true : undefined}
+              // Digits only. type="number" would let the scroll wheel change it.
+              onChange={(event) => onChange({ price: event.target.value.replace(/\D/g, "") })}
+            />
+          </div>
+          {errors.price && (
+            <p className="input-error-msg" id="asking-price-error">
+              {errors.price}
+            </p>
+          )}
         </div>
 
         <div data-error={Boolean(errors.city)}>
@@ -299,21 +318,20 @@ export default function SellForm({
             options={CITIES}
             value={city}
             onChange={(event) => onChange({ city: event.target.value as City | "" })}
-            hint="Buyers nearby can arrange same-day pickup."
             error={errors.city}
           />
         </div>
 
-        <Textarea
+        <Select
           label={
             <>
-              Fit note <span className="sell-form-optional">(optional)</span>
+              Material
             </>
           }
-          placeholder="Marked small but fits a medium"
-          hint="Only if the fit is unusual."
-          value={fitNote}
-          onChange={(event) => onChange({ fitNote: event.target.value })}
+          placeholder="Pick a material"
+          options={MATERIALS}
+          value={material}
+          onChange={(event) => onChange({ material: event.target.value as Material | "" })}
         />
 
         <PrimaryButton type="submit">Submit listing</PrimaryButton>

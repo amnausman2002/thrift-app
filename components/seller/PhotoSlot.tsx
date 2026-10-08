@@ -3,10 +3,17 @@
 // One cell of the photo grid. .photo-slot and friends from components.html
 // section 10. PhotoGrid owns the layout and the rules; this draws one slot.
 //
-// CHANGED FROM components.html: the slot and its two overlay controls are
-// <button>s, not <div>s, so they can be tabbed to and used without a mouse.
-// The remove control sits inside the slot in the mock, which would nest a
-// button inside a button, so it is a sibling here and positioned over it.
+// CHANGED FROM components.html, all four agreed on screen with Amna:
+//  - the slot and its overlay controls are <button>s, not <div>s, so they can
+//    be tabbed to and used without a mouse. The remove control is a sibling
+//    positioned over the slot, because a button cannot contain another button.
+//  - the remove control draws its X from the icon set. A "times" glyph is
+//    centred on its own typographic box rather than on the circle, which is
+//    why it always sat slightly high and to the left.
+//  - selecting a photo draws no outline on the tile. The only thing that
+//    changes is the "Set as cover" bar, inverted to white on black.
+//  - the cover badge is a small white pill in the bottom-left corner at 12px
+//    radius, not a black bar across the full width.
 
 export type GridPhoto = {
   id: string;
@@ -40,19 +47,13 @@ export default function PhotoSlot({
   onRemove,
 }: Props) {
   const label = `Photo ${index + 1}`;
+  const showBar = isSelected && !isCover;
 
   return (
-    <div style={{ position: "relative" }}>
+    <div className="photo-slot-wrap">
       <button
         type="button"
-        className={[
-          "photo-slot",
-          "has-photo",
-          isCover && "is-cover",
-          isSelected && !isCover && "is-selected",
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        className={["photo-slot", "has-photo", isCover && "is-cover"].filter(Boolean).join(" ")}
         onClick={onSelect}
         aria-pressed={isSelected}
         aria-label={isCover ? `${label}, the cover photo` : `${label}, tap to choose as cover`}
@@ -71,10 +72,22 @@ export default function PhotoSlot({
         onClick={onRemove}
         aria-label={`Remove ${label}`}
       >
-        &times;
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3"
+          strokeLinecap="round"
+          aria-hidden="true"
+        >
+          <path d="M18 6 6 18" />
+          <path d="m6 6 12 12" />
+        </svg>
       </button>
 
-      {isSelected && !isCover && (
+      {showBar && (
         <button type="button" className="photo-slot-set-cover" onClick={onSetCover}>
           Set as cover
         </button>

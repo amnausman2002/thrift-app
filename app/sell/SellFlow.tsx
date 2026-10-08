@@ -69,8 +69,6 @@ export default function SellFlow() {
   const [fields, setFields] = useState<FormFields>(EMPTY_FIELDS);
   const [prefilled, setPrefilled] = useState<Prefilled>(EMPTY_PREFILL);
   const [prefillError, setPrefillError] = useState<string | null>(null);
-  const [prefillDone, setPrefillDone] = useState(false);
-  const [qualityDone, setQualityDone] = useState(false);
   const [slow, setSlow] = useState(false);
   const [retakeTip, setRetakeTip] = useState<string | null>(null);
   const [qualitySheetOpen, setQualitySheetOpen] = useState(false);
@@ -137,6 +135,18 @@ export default function SellFlow() {
     });
   }
 
+  /** Choosing the cover also moves that photo to the front, so the order on
+   *  screen is the order a buyer will scroll through. The note from the photo
+   *  check travels with the photo, so nothing desyncs. */
+  function handleSetCover(id: string) {
+    setPhotos((current) => {
+      const chosen = current.find((photo) => photo.id === id);
+      if (!chosen) return current;
+      return [chosen, ...current.filter((photo) => photo.id !== id)];
+    });
+    setCoverId(id);
+  }
+
   function applyQuality(flags: QualityFlag[]) {
     setPhotos((current) =>
       current.map((photo, index) => ({ ...photo, note: slotNote(flagFor(flags, index)) })),
@@ -160,8 +170,6 @@ export default function SellFlow() {
     abortRef.current = controller;
     const files = photos.map((photo) => photo.file);
 
-    setPrefillDone(false);
-    setQualityDone(false);
     setSlow(false);
     setPrefillError(null);
     // Clear the last read before starting a new one. Without this, a second
@@ -183,7 +191,6 @@ export default function SellFlow() {
       } else {
         setPrefillError(result.error);
       }
-      setPrefillDone(true);
     });
 
     const quality = requestPhotoQuality(files, controller.signal).then((result) => {
@@ -192,7 +199,6 @@ export default function SellFlow() {
       if (!result.skipped && result.retakeTip && flaggedCount(result.flags) > 0) {
         setRetakeTip(result.retakeTip);
       }
-      setQualityDone(true);
     });
 
     void Promise.all([prefill, quality]).then(() => {
@@ -216,16 +222,12 @@ export default function SellFlow() {
   }
 
   const room = MAX_LISTING_PHOTOS - photos.length;
-  const cover = photos.find((photo) => photo.id === coverId);
   const flagged = photos.filter((photo) => photo.note).length;
 
   if (step === "intro") {
     return (
       <div className="sell-step">
-        <h1 className="text-h1 sell-heading">Show us the item.</h1>
-        <p className="sell-sub">
-          Take a few photos and we&apos;ll fill in what we can. You get the last word on all of it.
-        </p>
+        <h1 className="text-h1 sell-heading">Photo tips.</h1>
 
         <PhotoGuide />
 
@@ -238,14 +240,6 @@ export default function SellFlow() {
               void handleAdd(files);
             }}
           />
-          <TextLink
-            onClick={() => {
-              markGuideSeen();
-              setStep("photos");
-            }}
-          >
-            I&apos;ve done this before
-          </TextLink>
         </div>
       </div>
     );
@@ -255,49 +249,40 @@ export default function SellFlow() {
     return (
       <>
         <div className="sell-step">
-          <h1 className="text-h1 sell-heading">
-            {photos.length === 0 ? "Show us the item." : "Your photos"}
-          </h1>
-          <p className="sell-sub">
-            {photos.length === 0
-              ? `${MIN_LISTING_PHOTOS} to ${MAX_LISTING_PHOTOS} photos. The more angles, the better we read it.`
-              : photos.length < MIN_LISTING_PHOTOS
-                ? "One more and you're away. A single photo gets skipped."
-                : `${photos.length} of ${MAX_LISTING_PHOTOS}. A label close-up is the one that pays off.`}
-          </p>
+          <div className="sell-step-head">
+            <h1 className="text-h1 sell-heading">Your photos.</h1>
+            <TextLink onClick={() => setGuideOpen(true)}>View photo guide</TextLink>
+          </div>
 
-          {photos.length > 0 && (
-            <PhotoGrid
-              photos={photos}
-              coverId={coverId}
-              onAdd={(files) => void handleAdd(files)}
-              onRemove={handleRemove}
-              onSetCover={setCoverId}
-            />
+          <PhotoGrid
+            photos={photos}
+            coverId={coverId}
+            onAdd={(files) => void handleAdd(files)}
+            onRemove={handleRemove}
+            onSetCover={handleSetCover}
+          />
+
+          {/* Says why the button below is dim, right where she is looking. */}
+          {photos.length < MIN_LISTING_PHOTOS && (
+            <p className="photo-grid-note">
+              Add at least {MIN_LISTING_PHOTOS} pictures to develop a buyer&apos;s interest
+            </p>
           )}
 
           {preparing && <p className="input-hint">Getting your photos ready...</p>}
           {photoError && <p className="input-error-msg">{photoError}</p>}
 
-          <div className="sell-guide-link">
-            <TextLink onClick={() => setGuideOpen(true)}>How to photograph it</TextLink>
-          </div>
-
-          {/* Once there are photos, building the listing is the answer and the
-              two ways to add more step back. The button is never disabled for
-              having too few: tapping it says what is missing instead. */}
+          {/* CHANGED, deliberately: this button is disabled below two photos.
+              design-system.md says never disable the next button, so this is a
+              reversal we agreed on screen, not an oversight. The counter and
+              the line above it carry the reason. */}
           <div className="sell-footer">
-            {photos.length > 0 && (
-              <PrimaryButton onClick={startReading} disabled={preparing}>
-                Build my listing
-              </PrimaryButton>
-            )}
-            <PhotoSource
-              variant={photos.length === 0 ? "lead" : "quiet"}
-              room={room}
-              disabled={preparing}
-              onPick={(files) => void handleAdd(files)}
-            />
+            <PrimaryButton
+              onClick={startReading}
+              disabled={preparing || photos.length < MIN_LISTING_PHOTOS}
+            >
+              {`Build my listing (${photos.length}/${MAX_LISTING_PHOTOS})`}
+            </PrimaryButton>
           </div>
         </div>
 
@@ -316,13 +301,7 @@ export default function SellFlow() {
 
   if (step === "reading") {
     return (
-      <ReadingPhotos
-        coverUrl={cover?.url}
-        qualityDone={qualityDone}
-        prefillDone={prefillDone}
-        slow={slow}
-        onSkip={skipReading}
-      />
+      <ReadingPhotos photos={photos} slow={slow} onSkip={skipReading} />
     );
   }
 
@@ -331,7 +310,8 @@ export default function SellFlow() {
       <div className="sell-step">
         <h1 className="text-h1 sell-heading">Have a last look.</h1>
         <p className="sell-sub">
-          Change anything that is wrong. Nothing goes live until we have reviewed it.
+          Some details were filled in by AI based on your photos. Give them a quick check and make
+          any edits!
         </p>
         <SellForm
           photos={photos}

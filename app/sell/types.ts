@@ -1,5 +1,5 @@
 import type { GridPhoto } from "@/components/seller/PhotoSlot";
-import type { Brand, Category, City, ConditionValue, Size } from "@/lib/constants";
+import type { Brand, Category, City, ConditionValue, Material, Size } from "@/lib/constants";
 import type { Prefilled } from "./prefillToForm";
 
 /** A photo in the sell flow: what the grid needs to draw it, plus the prepared
@@ -19,11 +19,17 @@ export type FormFields = {
   colour: string;
   size: Size | null;
   condition: ConditionValue | null;
-  flawNote: string;
+  /** PRD `description`. Flaws live in here too: flaw_note was merged into this
+   *  field on 8 Oct, before any of it existed in a backend, so there was
+   *  nothing to migrate. */
+  description: string;
   isReplica: boolean | null;
   price: string;
   city: City | "";
-  fitNote: string;
+  /** NEW FIELD, replacing fit_note on the form. Not in the PRD's Listing table
+   *  yet: it needs a PRD update and Bismah's agreement, because buyers will
+   *  filter on it. Optional until then. */
+  material: Material | "";
 };
 
 export const EMPTY_FIELDS: FormFields = {
@@ -34,11 +40,11 @@ export const EMPTY_FIELDS: FormFields = {
   colour: "",
   size: null,
   condition: null,
-  flawNote: "",
+  description: "",
   isReplica: null,
   price: "",
   city: "",
-  fitNote: "",
+  material: "",
 };
 
 /** Lays the AI's answer over the form, filling empty fields only.
@@ -54,6 +60,5 @@ export function mergePrefill(fields: FormFields, prefilled: Prefilled): FormFiel
     brand: fields.brand || prefilled.brand,
     colour: fields.colour || prefilled.colour,
     condition: fields.condition ?? prefilled.condition,
-    flawNote: fields.flawNote || prefilled.flawNote,
   };
 }

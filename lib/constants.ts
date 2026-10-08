@@ -112,7 +112,7 @@ export const CONDITIONS: { value: ConditionValue; label: string; description: st
   { value: "brand_new_with_tags", label: "Brand new with tags", description: "With tags, never worn" },
   { value: "brand_new_without_tags", label: "Brand new without tags", description: "No tags, never worn" },
   { value: "very_good", label: "Very good", description: "Well worn, but still in great shape" },
-  { value: "fair", label: "Fair", description: "Shows some signs of wear — please photograph the areas that show it" },
+  { value: "fair", label: "Fair", description: "Shows some signs of wear" },
 ];
 
 // Photos per listing, enforced at submit, with exactly one cover.
@@ -221,6 +221,37 @@ export type City = (typeof CITIES)[number]["value"];
 // brand_other. Adding it changes the domain model, so it needs a PRD update and
 // Bismah's agreement first (buyers see the city on browse and item detail).
 
+// Fabrics, roughly most common first for Pakistani women's clothing, then the
+// western staples. Buyers shop by fabric here as much as by brand: "lawn" and
+// "khaddar" are seasons, not just materials.
+//
+// NEW FIELD. `material` is not in the PRD's Listing table yet, so this needs a
+// PRD update and Bismah's agreement before it is relied on anywhere. It is
+// optional on the form in the meantime.
+export const MATERIALS = [
+  { value: "lawn", label: "Lawn" },
+  { value: "cotton", label: "Cotton" },
+  { value: "linen", label: "Linen" },
+  { value: "khaddar", label: "Khaddar" },
+  { value: "karandi", label: "Karandi" },
+  { value: "chiffon", label: "Chiffon" },
+  { value: "georgette", label: "Georgette" },
+  { value: "organza", label: "Organza" },
+  { value: "silk", label: "Silk" },
+  { value: "crepe", label: "Crepe" },
+  { value: "velvet", label: "Velvet" },
+  { value: "net", label: "Net" },
+  { value: "jacquard", label: "Jacquard" },
+  { value: "viscose", label: "Viscose" },
+  { value: "denim", label: "Denim" },
+  { value: "jersey", label: "Jersey" },
+  { value: "wool", label: "Wool" },
+  { value: "leather", label: "Leather" },
+  { value: "other", label: "Other" },
+] as const;
+
+export type Material = (typeof MATERIALS)[number]["value"];
+
 export const PHOTO_TIPS = [
   "Daylight",
   "Plain background",
@@ -244,26 +275,26 @@ export const PHOTO_GUIDE: readonly PhotoGuideStep[] = [
   {
     illustration: "daylight",
     title: "Find some daylight",
-    body: "Next to a window in the daytime beats any lamp. Yellow light changes the colour.",
+    body: "Natural light brings out the true colours. A spot by a window works beautifully!",
   },
   {
     illustration: "background",
     title: "Keep the background plain",
-    body: "A door, a wall, a plain floor. A printed bedsheet competes with the clothes.",
+    body: "A plain wall, floor, or any neutral background keeps the focus on your clothes.",
   },
   {
     illustration: "whole_item",
     title: "Fit the whole thing in",
-    body: "Shoulder to hem, nothing cut off. Buyers want to see the shape.",
+    body: "Fit the full item in the frame, from shoulder to hem. Let buyers see the shape!",
   },
   {
     illustration: "flaw",
     title: "Show any flaw up close",
-    body: "A pull, a mark, a faded patch. Saying it first is what makes buyers trust you.",
+    body: "Add a close-up of any marks, pulls, or faded patches. It helps buyers know exactly what they're getting.",
   },
   {
     illustration: "label",
     title: "Photograph the label",
-    body: "If there is a label or tag, take a close-up. It is the only way we can fill in the brand.",
+    body: "A clear photo of the label or tag helps us fill in the brand details.",
   },
 ] as const;

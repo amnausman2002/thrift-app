@@ -259,12 +259,17 @@ img { max-width: 100%; display: block; }
 .btn-text-link:disabled { opacity: 0.3; cursor: not-allowed; }
 
 /* ── Input / textarea (components.html section 3) ───────── */
+/* CHANGED FROM components.html: the fill is transparent, not white. A screenful
+ * of white boxes on the cream canvas reads as a different background from every
+ * other screen, so the border alone carries the field. Agreed with Amna on the
+ * sell form and promoted here so the report form and the browse filters match.
+ * Flagged for Bismah: this is a design-system change, not a seller-side one. */
 .input {
   display: block;
   width: 100%;
   min-height: 44px;
   padding: var(--space-3) var(--space-4);
-  background: var(--white);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-family: var(--font-body);
@@ -300,7 +305,7 @@ img { max-width: 100%; display: block; }
   width: 100%;
   min-height: 96px;
   padding: var(--space-3) var(--space-4);
-  background: var(--white);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-family: var(--font-body);
@@ -630,7 +635,7 @@ img { max-width: 100%; display: block; }
   width: 100%;
   min-height: 44px;
   padding: var(--space-3) var(--space-4);
-  background: var(--white);
+  background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-family: var(--font-body);
@@ -651,6 +656,21 @@ img { max-width: 100%; display: block; }
 .select-input:disabled { background: var(--surface); color: var(--text-tertiary); cursor: not-allowed; }
 /* The placeholder option reads as a hint, not as a chosen value. */
 .select-input:invalid { color: var(--text-tertiary); }
+
+/* ── Fields on the sell form ─────────────────────────────── */
+/* The currency belongs in the field, not in the label. */
+.input-with-prefix { position: relative; }
+.input-prefix {
+  position: absolute;
+  left: var(--space-4);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--size-body);
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+/* Leaves room for "Rs." so the amount does not start underneath it. */
+.input-with-prefix .input { padding-left: 52px; }
 
 /* ── Sell form layout ────────────────────────────────────── */
 /* Mirrors .report-form in components.html, which is the only multi-field form
@@ -689,12 +709,36 @@ img { max-width: 100%; display: block; }
 .sell-step {
   max-width: 480px;
   margin: 0 auto;
-  min-height: 60vh;
   display: flex;
   flex-direction: column;
+  gap: var(--space-5);
+  /* Fill the screen, less the page's own padding, so .sell-footer's auto
+   * margin pushes the CTAs onto the bottom edge rather than onto the bottom of
+   * however much content a step happens to have. Every step then puts its
+   * buttons in the same place.
+   *
+   * dvh, not vh: on iOS Safari 100vh is the height with the address bar
+   * hidden, so a vh-based footer sits below the fold until she scrolls. The vh
+   * line above it is the fallback for anything too old for dvh. */
+  min-height: calc(100vh - var(--space-6) - var(--space-8));
+  min-height: calc(100dvh - var(--space-6) - var(--space-8));
+}
+/* A step taller than the screen just scrolls, and the buttons sit after the
+ * content as usual. Nothing is pinned over the top of anything. */
+.sell-heading { margin-bottom: 0; }
+/* Heading on the left, the quiet way back to the guide on the right. */
+.sell-step-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
   gap: var(--space-4);
 }
-.sell-heading { margin-bottom: 0; }
+.sell-step-head .btn-text-link {
+  width: auto;
+  min-height: 0;
+  padding: 0;
+  flex-shrink: 0;
+}
 .sell-sub {
   font-size: var(--size-body-sm);
   line-height: var(--lh-body-sm);
@@ -729,7 +773,7 @@ img { max-width: 100%; display: block; }
 .photo-guide {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-5);
   list-style: none;
   padding: 0;
   margin: 0;
@@ -737,11 +781,12 @@ img { max-width: 100%; display: block; }
 .photo-guide-item {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
+/* 3:2, matching the source photographs, and both sides land on the 4px grid. */
 .photo-guide-figure-box {
-  width: 72px;
-  height: 54px;
+  width: 96px;
+  height: 64px;
   flex-shrink: 0;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -750,11 +795,14 @@ img { max-width: 100%; display: block; }
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  /* The drawings are strokes in currentColor, so the tone is set here. */
-  color: var(--text-secondary);
 }
-.guide-figure { width: 100%; height: 100%; }
-.photo-guide-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.guide-figure { width: 100%; height: 100%; object-fit: cover; }
+.photo-guide-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
 .photo-guide-title {
   font-family: var(--font-ui);
   font-weight: 500;
@@ -778,76 +826,76 @@ img { max-width: 100%; display: block; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
+  gap: var(--space-7);
 }
-.reading-thumb {
-  width: 96px;
-  height: 96px;
+
+/* Her own photos are the loader. The deck fans out from behind the cover,
+ * snaps back and shakes, and goes round again. The pivot sits below the cards
+ * so they sweep an arc, the way a hand of cards opens. */
+.reading-deck {
+  position: relative;
+  width: 300px;
+  max-width: 100%;
+  height: 210px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.reading-card {
+  position: absolute;
+  bottom: 0;
+  width: 138px;
+  height: 183px;
   object-fit: cover;
   border-radius: var(--radius-sm);
-  margin-bottom: var(--space-4);
+  box-shadow: 0 2px 10px rgba(45, 45, 45, 0.16);
+  /* The pivot sits just below the card, so the deck sweeps an arc rather than
+   * spinning on the spot. Pulled in from 135% now the cards are half again as
+   * big: any further out and the widest card leaves the screen on a phone. */
+  transform-origin: 50% 118%;
 }
-.reading-heading { margin: 0; }
-.reading-sub {
+
+@media (prefers-reduced-motion: no-preference) {
+  .reading-card { animation: reading-fan 2600ms var(--ease) infinite; }
+  .reading-line { animation: reading-line 1800ms var(--ease) both; }
+}
+
+/* --fan is set per card in ReadingPhotos, so one animation serves all six. */
+@keyframes reading-fan {
+  0%,  6%   { transform: rotate(0deg) translateY(0); }
+  34%, 60%  { transform: rotate(var(--fan, 0deg)) translateY(-8px); }
+  76%       { transform: rotate(0deg) translateY(0); }
+  81%       { transform: rotate(-2.5deg) translateY(0); }
+  86%       { transform: rotate(2.5deg) translateY(0); }
+  91%       { transform: rotate(-1.5deg) translateY(0); }
+  96%, 100% { transform: rotate(0deg) translateY(0); }
+}
+
+/* One line at a time: in, hold, out. The element's key changes on every tick,
+ * which is what replays this. */
+@keyframes reading-line {
+  0%   { opacity: 0; transform: translateY(4px); }
+  14%  { opacity: 1; transform: translateY(0); }
+  80%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-4px); }
+}
+.reading-line {
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: var(--size-h3);
+  line-height: var(--lh-h3);
+  color: var(--text-primary);
+  min-height: calc(var(--size-h3) * var(--lh-h3));
+  /* No animation at rest, so the line simply swaps without moving. */
+  opacity: 1;
+}
+/* Over time, and saying so. Quieter than the rotating lines because it is an
+ * apology, not a step. */
+.reading-line.is-still {
+  font-weight: 400;
   font-size: var(--size-body-sm);
   color: var(--text-secondary);
-  margin-bottom: var(--space-5);
-}
-.reading-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  text-align: left;
-  width: 100%;
-  max-width: 300px;
-}
-.reading-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  font-family: var(--font-ui);
-  font-size: var(--size-body-sm);
-  color: var(--text-tertiary);
-}
-.reading-row.is-done { color: var(--text-primary); }
-/* Borrowed from .condition-radio so a step in progress and an unchosen option
- * read as the same kind of marker. */
-.reading-dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 1.5px solid var(--border);
-  flex-shrink: 0;
-  position: relative;
-}
-.reading-row.is-done .reading-dot {
-  border-color: var(--status-live);
-  background: var(--status-live);
-}
-.reading-row.is-done .reading-dot::after {
-  content: "";
-  position: absolute;
-  left: 4px;
-  top: 1px;
-  width: 4px;
-  height: 8px;
-  border: solid var(--white);
-  border-width: 0 1.5px 1.5px 0;
-  transform: rotate(45deg);
-}
-/* The one piece of motion in the flow: the step being worked on. Suppressed
- * entirely at rest, per design-system.md, rather than run at 0.01ms. */
-@media (prefers-reduced-motion: no-preference) {
-  .reading-row:not(.is-done) .reading-dot {
-    animation: reading-pulse 1.4s var(--ease) infinite;
-  }
-}
-@keyframes reading-pulse {
-  0%, 100% { border-color: var(--border); }
-  50%      { border-color: var(--text-secondary); }
+  max-width: 260px;
 }
 
 /* ── AI suggestion markers ───────────────────────────────── */
@@ -868,6 +916,53 @@ img { max-width: 100%; display: block; }
   color: var(--text-tertiary);
   font-weight: 400;
 }
+/* Field name on the left, "AI suggested" pushed to the right of the same line.
+ * Baseline-aligned so the small marker sits on the label's baseline rather
+ * than floating in the middle of it. */
+.field-label {
+  display: flex;
+  align-items: center;
+  /* OFF-GRID: 6px, not a spacing token. The sparkle reads as part of the label
+   * at this distance and as a separate thing at 8px. Worth a token if it is
+   * ever used again. */
+  gap: 6px;
+  width: 100%;
+}
+
+/* The sparkle sits immediately after the field's name. Still --status-pending,
+ * the one warm token we own, so the AI association survives losing the words. */
+.ai-sparkle-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
+.ai-sparkle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 44px of tappable area without 44px of visible icon: the padding is
+   * negative-margined back so the label line does not grow. */
+  padding: var(--space-3);
+  margin: calc(var(--space-3) * -1);
+  color: var(--status-pending);
+  background: none;
+  border: none;
+}
+/* The tooltip follows the toast spec in design-system.md. */
+.ai-tooltip {
+  position: absolute;
+  bottom: calc(100% + var(--space-1));
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: var(--text-primary);
+  color: var(--white);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: var(--size-micro);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  z-index: var(--z-toast);
+  pointer-events: none;
+}
+
+
 .ai-could-be {
   display: flex;
   flex-direction: column;
@@ -882,20 +977,40 @@ img { max-width: 100%; display: block; }
 }
 
 /* ── Photos carried into the form step ───────────────────── */
+/* Scrolls sideways rather than wrapping: six photos at this size would push
+ * the whole form down the page. Same trick as .chip-row. */
 .sell-form-photos {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  flex-wrap: wrap;
+  overflow-x: auto;
+  padding-bottom: var(--space-1);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.sell-form-photos::-webkit-scrollbar { display: none; }
 .sell-form-thumb {
-  width: 48px;
-  height: 48px;
+  width: 96px;
+  height: 96px;
   object-fit: cover;
   border-radius: var(--radius-sm);
   flex-shrink: 0;
 }
-.sell-form-photos-edit { width: auto; margin-left: auto; }
+/* The only way back to the photos step from here. */
+.sell-form-thumb-add {
+  width: 96px;
+  height: 96px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  padding: 0;
+}
+.sell-form-thumb-add:hover { border-color: var(--text-primary); }
 /* Said once, quietly, when the AI read failed. Not an error: nothing is
  * broken, there is simply nothing filled in. */
 .sell-form-notice {
@@ -905,6 +1020,76 @@ img { max-width: 100%; display: block; }
   background: var(--surface);
   border-radius: var(--radius-sm);
   padding: var(--space-3) var(--space-4);
+}
+
+/* ── Photo grid, agreed changes (components/seller/PhotoGrid) ── */
+/* These started as a draft in app/sell and are now part of the shared
+ * component. Every rule here differs from components.html; the component's own
+ * comment says which and why. Flagged for Bismah. */
+
+/* Every empty cell is live and carries a plus, so the ceiling of six is
+ * visible from the start rather than appearing one cell at a time. Solid
+ * border, not the dashed one, because an empty cell is a real control now. */
+.photo-slot.is-empty {
+  border-style: solid;
+  color: var(--text-secondary);
+  opacity: 1;
+}
+
+/* Drop the grid away from the heading, and open the rows up. The gap above the
+ * grid is the larger of the two on purpose: it separates two different things,
+ * where the row gap only separates more of the same thing. */
+.photo-grid-wrap { margin-top: var(--space-5); }
+.photo-grid-wrap .photo-grid { row-gap: var(--space-4); }
+
+/* The cover photo carries no outline. The pill alone says which one it is. */
+.photo-slot-wrap .photo-slot.is-cover {
+  border: 1px solid var(--border);
+}
+
+.photo-slot-wrap { position: relative; }
+
+/* Selecting a photo draws nothing on the picture itself. The only thing that
+ * changes is the bar, inverted to white on black so it reads as the action
+ * rather than as a border round the tile. */
+.photo-slot-wrap .photo-slot-set-cover {
+  background: var(--text-primary);
+  color: var(--white);
+  border-top: none;
+  /* Follows the tile's own corners, so the bar sits inside the shape rather
+   * than squaring off its bottom edge. */
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+}
+
+/* The cover badge is a pill in the bottom-left corner, white on the photo,
+ * rather than a black bar across the full width. Square-ish at radius-sm, not
+ * a capsule: nothing else in the system is fully rounded. */
+.photo-slot-wrap .photo-slot-cover-label {
+  left: var(--space-2);
+  right: auto;
+  bottom: var(--space-2);
+  background: var(--white);
+  color: var(--text-primary);
+  /* OFF-SCALE: 12px is not a radius token. --radius-sm (4px) is the only one
+   * design-system.md names, so this needs a --radius-pill token and Bismah's
+   * agreement before it is reused anywhere else. */
+  border-radius: 12px;
+  padding: 2px var(--space-2);
+  font-size: var(--size-micro);
+  text-align: left;
+}
+
+/* The remove control draws its X from the icon set. A "times" glyph is centred
+ * on its own typographic box rather than on the circle, which is why it always
+ * sat a little high and to the left. */
+.photo-slot-remove svg { display: block; }
+
+/* Explains the dimmed Build my listing button, centred under the grid. */
+.photo-grid-note {
+  text-align: center;
+  font-size: var(--size-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
 }
 
 /* ── Photo quality sheet ─────────────────────────────────── */

@@ -86,16 +86,16 @@ The core entity. Status drives everything the buyer, the seller and the admin se
 | id | uuid |  |
 | seller\_id | uuid | → User |
 | title | string |  |
-| description | text |  |
+| description | text | Free text in her own words. **Flaws live in here too**: flaw\_note was merged into this field on 8 Oct. Prompted on the form with "e.g. worn 3-4 times, fits true to size. small mark near the sleeve." |
 | brand | enum | Fixed list of \~30, plus other |
 | brand\_other | string | Only when brand is other |
 | category | enum | kurta, pret, co\_ord\_set, dupatta, dress, top, bottoms, jeans, skirt, jacket, sportswear, shoes, bag |
-| colour | string | Plain everyday words. Filled by photo-to-listing, editable, and used by search. No fixed list yet |
+| colour | string | Plain everyday words. Filled by photo-to-listing and used by search. **Not shown on the sell form** as of 8 Oct, so it is captured but not editable by the seller. No fixed list yet |
 | size | string | Clothes: XS–XL. Shoes: UK 3–9. **Bags and dupattas: null** (no size field shown) |
 | measurements | string | Optional free text, inches |
-| fit\_note | text | Optional, all categories. "Marked small but fits a medium", "runs narrow". Prompted with an example on the form |
+| material | enum | **Not agreed yet.** 19 fabrics in `MATERIALS`, lawn and khaddar first, plus `other`. Replaced fit\_note on the sell form on 8 Oct. Needs Bismah's agreement before buyers filter on it |
+| fit\_note | text | Optional, all categories. **No longer on the sell form** as of 8 Oct, replaced by material. Still specified here: decide whether to delete it or keep it for later |
 | condition | enum | brand\_new\_with\_tags, brand\_new\_without\_tags, very\_good, fair — each shown with its description |
-| flaw\_note | text | Optional. Prompted for fair, and the form asks for a photo of the flaw |
 | is\_replica | boolean | Required declaration, not inferred |
 | asking\_price | integer | PKR |
 | original\_price | integer | Optional, PKR |
@@ -267,7 +267,7 @@ This is the strongest addition of the three. It sits directly on the north star 
 
 ### **3\. Approval copilot (admin side, in the queue)**
 
-Beside each pending listing, a short summary for whoever is reviewing: what the photos show, whether the stated brand looks consistent with them, whether the asking price is sane against the original, and whether the description mentions a flaw the seller did not record in the flaw field. We still approve or reject. The AI does the reading.
+Beside each pending listing, a short summary for whoever is reviewing: what the photos show, whether the stated brand looks consistent with them, whether the asking price is sane against the original, and whether the photos show a flaw the seller did not mention in her description. We still approve or reject. The AI does the reading.
 
 This protects the 24-hour turnaround, and it is the half of the product nobody else demos — everyone builds the shiny buyer side.
 
@@ -295,6 +295,16 @@ Decisions taken during the build that differ from the spec above, or that resolv
 | 5 Oct 2026 | **No viewfinder of our own.** `capture="environment"` hands her to the phone's camera app | Rebuilding focus, exposure and a shutter is work we do not need, and a half-finished viewfinder encourages fewer photos | Built |
 | 5 Oct 2026 | **The photo guide shows once**, then lives behind "How to photograph it" | Remembered in `localStorage`, not on the User record: it is a convenience, and a new phone showing it again is the right outcome | Built |
 | 5 Oct 2026 | **`title_suggestion`, `colour` and `flaws_seen` carry no confidence** | `listingDraftSchema` has no `colour_confidence` or `title_confidence`, so those three are marked "AI suggested" without a confidence claim rather than being given one we invented | **Open.** Adding the two fields to the schema is a small change |
+
+| 8 Oct 2026 | **`material` added to Listing**, replacing fit\_note on the sell form | Buyers here shop by fabric as much as by brand: lawn and khaddar are seasons, not just materials | **Open.** Needs Bismah's agreement |
+| 8 Oct 2026 | **`colour` removed from the sell form**, still captured | Amna's call. She cannot correct a wrong colour, and buyers filter on it | Built. Revisit with the colour list |
+| 8 Oct 2026 | **`flaw_note` merged into `description`** | One box in her own words, flaws included. Nothing existed in a backend yet, so there was nothing to migrate | Settled. The copilot check is re-pointed, see below |
+| 8 Oct 2026 | **The approval copilot compares the AI's `flaws_seen` against her description**, not description against a flaw field | The flaw field no longer exists. Comparing what the photos show against what she wrote is the more useful direction anyway: it catches a flaw she left out, which is what the check was for | Settled |
+| 8 Oct 2026 | **Form fields are transparent, not white** | A screenful of white boxes on the cream canvas reads as a different background from every other screen | Built app-wide. Flagged to Bismah: it changes the report form and browse filters too |
+| 8 Oct 2026 | **"Build my listing" is disabled below two photos** | `design-system.md` says never disable the next button. Reversed: the grid is the error, and a line under it says what is missing | Built. Flagged to Bismah, it is a design-system rule |
+| 8 Oct 2026 | **AI suggestions marked with a sparkle, not the words "AI suggested"** | Amna's call. Tapping the sparkle gives a tooltip; one line under the heading explains the form as a whole | Built. The trade is discoverability |
+| 8 Oct 2026 | **"Please check" dropped from medium confidence**, and the brand evidence line removed | Amna's call | Built. High and medium now look identical to her; the distinction survives in the data |
+| 8 Oct 2026 | **Only the phone is verified at submit, not the email** | Amna's position. Removes the email link and the different-browser claim flow, which was the most expensive part of the seller build | **Open and consequential.** This document's own fallback is "if the phone code fails, she continues with email alone", which has nothing to fall back to. A seller whose SMS never arrives cannot sign back in |
 
 ## **Read-it-back check**
 
